@@ -10,7 +10,7 @@
 import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, X, Trophy, GraduationCap, Printer, Settings } from 'lucide-react';
+import { Sparkles, X, Trophy, GraduationCap, Printer, Settings, HelpCircle } from 'lucide-react';
 import { STICKER_MAP, COLLECTION_STICKERS, STICKER_CATEGORIES } from '../data/stickers';
 import { ACHIEVEMENT_DOMAINS, ACHIEVEMENT_TIERS, achievementId } from '../data/achievements';
 import useStickers from '../hooks/useStickers';
@@ -20,6 +20,7 @@ import AchievementBadge from '../components/AchievementBadge';
 import HarpIcon from '../components/HarpIcon';
 import PrintReport from '../components/PrintReport';
 import ManageDataModal from '../components/ManageDataModal';
+import HowRanksWorkModal from '../components/HowRanksWorkModal';
 
 const TEACHER_VIEW_KEY = 'jma_teacher_view_v1';
 
@@ -119,6 +120,7 @@ export default function StickerBookPage() {
   const [openSticker, setOpenSticker] = useState(null);
   const [printReportOpen, setPrintReportOpen] = useState(false);
   const [manageDataOpen, setManageDataOpen] = useState(false);
+  const [howRanksOpen, setHowRanksOpen] = useState(false);
   // Teacher View — when on, the achievement section swaps kid blurbs for
   // standards-aligned skill descriptions. Persisted so a teacher demo'ing the
   // app to a principal can leave it on between visits.
@@ -179,10 +181,24 @@ export default function StickerBookPage() {
       <FullscreenButton />
 
       <main className="flex-1 pt-20 pb-10 px-3 md:px-6 max-w-6xl mx-auto w-full">
-        {/* Rank badge with progress meter inside it */}
-        <div className="flex justify-center mt-4 mb-6">
+        {/* Rank badge with progress meter inside it, plus a friendly
+            "How ranks work" info button so first-time kids/parents can
+            open a 3-panel explainer of the tier + rank system. */}
+        <div className="flex justify-center items-center gap-2 mt-4 mb-6">
           <RankBadge showProgress clickable={false} />
+          <button
+            data-testid="open-how-ranks"
+            onClick={() => setHowRanksOpen(true)}
+            aria-label="How ranks work"
+            title="How ranks work"
+            className="chunky-btn w-10 h-10 md:w-11 md:h-11 rounded-full flex items-center justify-center touch-manipulation flex-shrink-0"
+            style={{ backgroundColor: 'white', borderColor: 'var(--jma-dark)', color: 'var(--jma-dark)' }}
+          >
+            <HelpCircle className="w-5 h-5 md:w-6 md:h-6" />
+          </button>
         </div>
+
+        <HowRanksWorkModal open={howRanksOpen} onClose={() => setHowRanksOpen(false)} />
 
         {/* ============ ACHIEVEMENT BADGES (top — the rank-driving section) ============ */}
         <section className="mb-10" data-testid="category-achievements">
