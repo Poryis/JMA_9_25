@@ -198,7 +198,7 @@ export default function StickerBookPage() {
           </button>
         </div>
 
-        <HowRanksWorkModal open={howRanksOpen} onClose={() => setHowRanksOpen(false)} />
+        <HowRanksWorkModal open={howRanksOpen} onClose={() => setHowRanksOpen(false)} teacherView={teacherView} />
 
         {/* ============ ACHIEVEMENT BADGES (top — the rank-driving section) ============ */}
         <section className="mb-10" data-testid="category-achievements">
