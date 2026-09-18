@@ -5,7 +5,7 @@
 // speech bubbles from Dr. J on every step, and a POW! starburst on
 // each panel transition.
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { RANKS } from '../data/ranks';
@@ -53,49 +53,6 @@ function SpeechBubble({ children, accent }) {
         !
       </div>
     </div>
-  );
-}
-
-// ------------------------------------------------------------------
-// POW! starburst — briefly overlaid on panel change.
-// ------------------------------------------------------------------
-function PowBurst({ trigger, label = 'POW!' }) {
-  return (
-    <AnimatePresence>
-      {trigger && (
-        <motion.div
-          key={trigger}
-          aria-hidden="true"
-          className="absolute pointer-events-none"
-          style={{
-            left: '50%',
-            top: '50%',
-            zIndex: 10,
-            animation: 'pow-burst 0.6s ease-out forwards',
-          }}
-        >
-          <svg viewBox="0 0 120 120" style={{ width: 140, height: 140, overflow: 'visible' }}>
-            <polygon
-              points="60,4 70,40 108,32 82,60 116,84 74,80 78,116 60,86 42,116 46,80 4,84 38,60 12,32 50,40"
-              fill="#FFCC00"
-              stroke={JMA_DARK}
-              strokeWidth="4"
-              strokeLinejoin="round"
-            />
-            <text
-              x="60" y="70"
-              textAnchor="middle"
-              fontFamily="'Fredoka One', 'Bangers', sans-serif"
-              fontSize="26"
-              fontWeight="900"
-              fill={JMA_DARK}
-            >
-              {label}
-            </text>
-          </svg>
-        </motion.div>
-      )}
-    </AnimatePresence>
   );
 }
 
@@ -156,7 +113,7 @@ const KID_PANELS = [
   {
     key: 'tiers',
     portrait: DR_J,
-    quote: 'Yo yo yo! Every music skill has 3 badges to snag. Grab \u2018em in order — no skippin\u2019!',
+    quote: 'Every music skill has 3 badges. Earn them in order — Cadet, then Pro, then Master.',
     accent: '#4285F4',
     title: 'Badges have 3 levels',
     content: (
@@ -172,7 +129,7 @@ const KID_PANELS = [
   {
     key: 'breadth',
     portrait: DR_J_DETECTIVE,
-    quote: 'Playin\u2019 the same game over \u2018n over? That won\u2019t level ya up. Try LOTS of different music stuff!',
+    quote: 'Ranks aren\u2019t about how many stickers you have — they\u2019re about how many different music skills you\u2019ve tried.',
     accent: '#AF52DE',
     title: 'Try lots of stuff!',
     content: (
@@ -189,7 +146,7 @@ const KID_PANELS = [
   {
     key: 'ladder',
     portrait: DR_J_GRAD,
-    quote: 'Here\u2019s the whole ladder. Start as a Polliwog — end up runnin\u2019 the show!',
+    quote: 'Seven ranks to climb. Start as a Polliwog and work your way up!',
     accent: '#FFCC00',
     title: 'The ranks',
     content: <LadderList formal={false} />,
@@ -200,7 +157,7 @@ const TEACHER_PANELS = [
   {
     key: 'tiers',
     portrait: DR_J,
-    quote: 'Three enamel tiers per music domain — Cadet, Pro, Master — advancement gated within each.',
+    quote: 'Each music domain has three enamel tiers: Cadet, Pro, and Master.',
     accent: '#4285F4',
     title: 'Skill Badges: Cadet · Pro · Master',
     content: (
@@ -216,7 +173,7 @@ const TEACHER_PANELS = [
   {
     key: 'breadth',
     portrait: DR_J_DETECTIVE,
-    quote: 'Academy Rank tracks breadth — not sticker volume. Grinding a single game won\u2019t advance the ladder.',
+    quote: 'Ranks reflect breadth of skill across domains — not sticker volume.',
     accent: '#AF52DE',
     title: 'Ranks reward breadth',
     content: (
@@ -234,7 +191,7 @@ const TEACHER_PANELS = [
   {
     key: 'ladder',
     portrait: DR_J_GRAD,
-    quote: 'Seven ranks. Each surfaces a clean requirement — great for printed report cards.',
+    quote: 'Seven ranks. Each has a clear requirement, perfect for printed report cards.',
     accent: '#FFCC00',
     title: 'The Rank Ladder',
     content: <LadderList formal={true} />,
@@ -250,24 +207,11 @@ function getPanels(teacherView) {
 // ------------------------------------------------------------------
 export default function HowRanksWorkModal({ open, onClose, teacherView = false }) {
   const [step, setStep] = useState(0);
-  const [powKey, setPowKey] = useState(0);
   const audienceLabel = teacherView ? 'For grown-ups' : 'Missions Guide';
-
-  // Fire the POW! starburst whenever the panel index changes.
-  const prevStep = useRef(step);
-  useEffect(() => {
-    if (prevStep.current !== step) {
-      setPowKey((k) => k + 1);
-      prevStep.current = step;
-    }
-  }, [step]);
 
   // Reset to the first panel every time the modal reopens.
   useEffect(() => {
-    if (open) {
-      setStep(0);
-      prevStep.current = 0;
-    }
+    if (open) setStep(0);
   }, [open]);
 
   if (!open) return null;
@@ -326,7 +270,6 @@ export default function HowRanksWorkModal({ open, onClose, teacherView = false }
 
           {/* Comic-strip body — halftone bg, mascot + speech, main content. */}
           <div className="jma-halftone relative">
-            <PowBurst trigger={powKey} label="POW!" />
             <div className="p-4 md:p-5">
               {/* Mascot row — Dr. J on the left, speech bubble to his right. */}
               <div className="flex items-end gap-3 mb-4">
