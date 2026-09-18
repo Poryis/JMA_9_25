@@ -10,7 +10,7 @@
 import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, X, Trophy, GraduationCap, Printer, Settings, HelpCircle } from 'lucide-react';
+import { Sparkles, X, Trophy, GraduationCap, Printer, Settings } from 'lucide-react';
 import { STICKER_MAP, COLLECTION_STICKERS, STICKER_CATEGORIES } from '../data/stickers';
 import { ACHIEVEMENT_DOMAINS, ACHIEVEMENT_TIERS, achievementId } from '../data/achievements';
 import useStickers from '../hooks/useStickers';
@@ -181,20 +181,33 @@ export default function StickerBookPage() {
       <FullscreenButton />
 
       <main className="flex-1 pt-20 pb-10 px-3 md:px-6 max-w-6xl mx-auto w-full">
-        {/* Rank badge with progress meter inside it, plus a friendly
-            "How ranks work" info button so first-time kids/parents can
-            open a 3-panel explainer of the tier + rank system. */}
-        <div className="flex justify-center items-center gap-2 mt-4 mb-6">
+        {/* Rank badge with progress meter inside it, plus a chunky
+            arcade-style "MISSIONS?" button that pops open the comic-
+            strip explainer. Bounces gently to invite a tap. */}
+        <div className="flex justify-center items-end gap-3 mt-4 mb-6">
           <RankBadge showProgress clickable={false} />
           <button
             data-testid="open-how-ranks"
             onClick={() => setHowRanksOpen(true)}
             aria-label="How ranks work"
-            title="How ranks work"
-            className="chunky-btn w-10 h-10 md:w-11 md:h-11 rounded-full flex items-center justify-center touch-manipulation flex-shrink-0"
-            style={{ backgroundColor: 'white', borderColor: 'var(--jma-dark)', color: 'var(--jma-dark)' }}
+            className="chunky-btn relative flex flex-col items-center justify-center px-3 py-2 md:px-4 md:py-2.5 touch-manipulation flex-shrink-0"
+            style={{
+              backgroundColor: '#FFCC00',
+              borderColor: 'var(--jma-dark)',
+              color: 'var(--jma-dark)',
+              animation: 'missions-btn-bob 2.4s ease-in-out infinite',
+              transformOrigin: 'center',
+            }}
           >
-            <HelpCircle className="w-5 h-5 md:w-6 md:h-6" />
+            <span className="text-[9px] md:text-[10px] font-black uppercase tracking-wider leading-none opacity-70">Ranks</span>
+            <span className="text-sm md:text-base font-black font-display leading-none mt-0.5">HOW?</span>
+            <span
+              aria-hidden="true"
+              className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-[#FF3B30] border-2 flex items-center justify-center text-white text-[10px] font-black"
+              style={{ borderColor: 'var(--jma-dark)' }}
+            >
+              !
+            </span>
           </button>
         </div>
 

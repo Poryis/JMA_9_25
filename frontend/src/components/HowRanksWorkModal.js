@@ -1,218 +1,281 @@
-// HowRanksWorkModal — 3-panel explainer of the JMA progression system.
-// Same skeleton for both audiences; copy swaps based on the parent
-// page's Teacher View toggle so the "?" button feels contextual: kids
-// see plain, playful language; grown-ups see the pedagogical rationale.
+// HowRanksWorkModal — comic-strip explainer of the JMA progression
+// system, hosted by Dr. Jellybone. Copy still swaps between kid and
+// teacher/parent audiences (parent = Sticker Book's Teacher View),
+// but wrapped in a comic-book presentation: halftone-dotted panels,
+// speech bubbles from Dr. J on every step, and a POW! starburst on
+// each panel transition.
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight, Target, Sparkles, Trophy } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { RANKS } from '../data/ranks';
 
 const JMA_DARK = 'var(--jma-dark)';
+const DR_J = 'assets/characters/dr-jellybone.png';
+const DR_J_DETECTIVE = 'assets/characters/dr-jellybone-detective.png';
+const DR_J_GRAD = 'assets/characters/charlie-grad.png';
 
-// ---- Shared panel visuals (icon + accent color) --------------------
-const PANEL_META = [
-  { key: 'tiers',   icon: Target,    accent: '#4285F4' },
-  { key: 'breadth', icon: Sparkles,  accent: '#AF52DE' },
-  { key: 'ladder',  icon: Trophy,    accent: '#FFCC00' },
-];
-
-// ---- Kid-facing copy ----------------------------------------------
-function KidPanel1() {
+// ------------------------------------------------------------------
+// Speech bubble — pointy tail on the bottom-left, big block-shadow
+// border to sell the comic-strip vibe.
+// ------------------------------------------------------------------
+function SpeechBubble({ children, accent }) {
   return (
-    <>
-      <p className="mb-3">
-        Every music skill has <b>3 badges</b> to earn — like levels in a game.
-      </p>
-      <div className="flex items-center justify-center gap-2 md:gap-3 my-4">
-        {[
+    <div
+      className="relative rounded-2xl border-[3px] bg-white shadow-[0_4px_0_0_var(--jma-dark)] px-3 py-2 md:px-4 md:py-3"
+      style={{ borderColor: JMA_DARK }}
+    >
+      <div className="text-[13px] md:text-sm font-bold leading-snug" style={{ color: JMA_DARK }}>
+        {children}
+      </div>
+      {/* Tail — two triangles stacked to fake a stroked speech tail. */}
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 20 18"
+        style={{
+          position: 'absolute',
+          left: 14,
+          bottom: -14,
+          width: 22,
+          height: 20,
+          overflow: 'visible',
+        }}
+      >
+        <polygon points="2,0 18,0 4,16" fill={JMA_DARK} />
+        <polygon points="4,0 16,0 6,12" fill="white" />
+      </svg>
+      {/* Corner accent chip */}
+      <div
+        aria-hidden="true"
+        className="absolute -top-2 -right-2 w-6 h-6 rounded-full border-[3px] flex items-center justify-center text-white text-[10px] font-black"
+        style={{ backgroundColor: accent, borderColor: JMA_DARK }}
+      >
+        !
+      </div>
+    </div>
+  );
+}
+
+// ------------------------------------------------------------------
+// POW! starburst — briefly overlaid on panel change.
+// ------------------------------------------------------------------
+function PowBurst({ trigger, label = 'POW!' }) {
+  return (
+    <AnimatePresence>
+      {trigger && (
+        <motion.div
+          key={trigger}
+          aria-hidden="true"
+          className="absolute pointer-events-none"
+          style={{
+            left: '50%',
+            top: '50%',
+            zIndex: 10,
+            animation: 'pow-burst 0.6s ease-out forwards',
+          }}
+        >
+          <svg viewBox="0 0 120 120" style={{ width: 140, height: 140, overflow: 'visible' }}>
+            <polygon
+              points="60,4 70,40 108,32 82,60 116,84 74,80 78,116 60,86 42,116 46,80 4,84 38,60 12,32 50,40"
+              fill="#FFCC00"
+              stroke={JMA_DARK}
+              strokeWidth="4"
+              strokeLinejoin="round"
+            />
+            <text
+              x="60" y="70"
+              textAnchor="middle"
+              fontFamily="'Fredoka One', 'Bangers', sans-serif"
+              fontSize="26"
+              fontWeight="900"
+              fill={JMA_DARK}
+            >
+              {label}
+            </text>
+          </svg>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// ------------------------------------------------------------------
+// Shared visual bits inside each panel
+// ------------------------------------------------------------------
+function TierChips({ items }) {
+  return (
+    <div className="flex items-end justify-center gap-2 md:gap-3">
+      {items.map((t) => (
+        <div
+          key={t.label}
+          className="flex flex-col items-center rounded-2xl border-[3px] px-2 py-1.5 md:px-3 md:py-2 bg-white shadow-[0_3px_0_0_var(--jma-dark)]"
+          style={{ borderColor: JMA_DARK }}
+        >
+          <div className="w-8 h-8 md:w-9 md:h-9 rounded-full border-2 mb-1" style={{ backgroundColor: t.color, borderColor: JMA_DARK }} />
+          <div className="text-[10px] md:text-[11px] font-black font-display uppercase" style={{ color: JMA_DARK }}>
+            {t.label}
+          </div>
+          <div className="text-[9px] font-bold opacity-60">{t.hint}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function LadderList({ formal }) {
+  return (
+    <ol className="space-y-1.5" data-testid="rank-ladder-list">
+      {RANKS.map((r, i) => (
+        <li
+          key={r.id}
+          className="flex items-center gap-2 md:gap-3 rounded-xl border-2 bg-white px-2 py-1.5 md:px-3 md:py-2"
+          style={{ borderColor: r.color }}
+        >
+          <div
+            className="w-6 h-6 md:w-7 md:h-7 rounded-full flex-shrink-0 border-2"
+            style={{ backgroundColor: r.badgeBg, borderColor: r.color }}
+          />
+          <div className="flex-1 min-w-0">
+            <div className="text-xs md:text-sm font-black font-display leading-tight" style={{ color: JMA_DARK }}>
+              {i + 1}. {r.title}
+            </div>
+            <div className="text-[10px] md:text-xs font-bold opacity-70 leading-tight truncate">
+              {formal ? r.requirement.label : r.subtitle}
+            </div>
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+// ------------------------------------------------------------------
+// Panel content — kid vs teacher copy, hosted by Dr. J
+// ------------------------------------------------------------------
+const KID_PANELS = [
+  {
+    key: 'tiers',
+    portrait: DR_J,
+    quote: 'Yo yo yo! Every music skill has 3 badges to snag. Grab \u2018em in order — no skippin\u2019!',
+    accent: '#4285F4',
+    title: 'Badges have 3 levels',
+    content: (
+      <TierChips
+        items={[
           { label: 'Cadet',  color: '#CD7F32', hint: 'Getting it' },
           { label: 'Pro',    color: '#94A3B8', hint: 'Rocking it' },
           { label: 'Master', color: '#FFCC00', hint: 'Owning it' },
-        ].map((t) => (
-          <div
-            key={t.label}
-            className="flex flex-col items-center rounded-2xl border-4 px-3 py-2 md:px-4 md:py-3 bg-white shadow-[0_3px_0_0_var(--jma-dark)]"
-            style={{ borderColor: JMA_DARK }}
-          >
-            <div className="w-9 h-9 md:w-10 md:h-10 rounded-full border-2 mb-1" style={{ backgroundColor: t.color, borderColor: JMA_DARK }} />
-            <div className="text-[11px] md:text-xs font-black font-display uppercase" style={{ color: JMA_DARK }}>{t.label}</div>
-            <div className="text-[10px] font-bold opacity-60">{t.hint}</div>
-          </div>
-        ))}
-      </div>
-      <p className="text-sm">
-        You gotta earn them in order — <b>Cadet</b>, then <b>Pro</b>, then <b>Master</b>. No skipping!
-      </p>
-    </>
-  );
-}
-
-function KidPanel2() {
-  return (
-    <>
-      <p className="mb-3">
-        Ranks aren't about how many stickers you have. They're about how many <b>different</b> kinds of music you're good at!
-      </p>
-      <div className="rounded-2xl border-4 p-3 md:p-4 bg-[#FFF8D6]" style={{ borderColor: JMA_DARK }}>
-        <div className="text-xs md:text-sm font-black font-display mb-2" style={{ color: JMA_DARK }}>
-          Playing the same game over and over? That won't level you up.
+        ]}
+      />
+    ),
+  },
+  {
+    key: 'breadth',
+    portrait: DR_J_DETECTIVE,
+    quote: 'Playin\u2019 the same game over \u2018n over? That won\u2019t level ya up. Try LOTS of different music stuff!',
+    accent: '#AF52DE',
+    title: 'Try lots of stuff!',
+    content: (
+      <div className="rounded-2xl border-[3px] p-3 bg-[#FFF8D6]" style={{ borderColor: JMA_DARK }}>
+        <div className="text-xs md:text-sm font-black font-display mb-1" style={{ color: JMA_DARK }}>
+          Different games = faster rank-ups.
         </div>
-        <div className="text-xs md:text-sm" style={{ color: JMA_DARK }}>
-          Try <b>lots of different games</b> and your rank goes up faster.
+        <div className="text-[11px] md:text-xs" style={{ color: JMA_DARK }}>
+          Rhythm, ears, keyboard, beats, songs — mix it up!
         </div>
       </div>
-    </>
-  );
-}
+    ),
+  },
+  {
+    key: 'ladder',
+    portrait: DR_J_GRAD,
+    quote: 'Here\u2019s the whole ladder. Start as a Polliwog — end up runnin\u2019 the show!',
+    accent: '#FFCC00',
+    title: 'The ranks',
+    content: <LadderList formal={false} />,
+  },
+];
 
-function KidPanel3() {
-  return (
-    <div>
-      <p className="text-sm mb-3">
-        <b>Just starting out → running the show.</b> Seven ranks to climb!
-      </p>
-      <ol className="space-y-1.5" data-testid="rank-ladder-list">
-        {RANKS.map((r, i) => (
-          <li
-            key={r.id}
-            className="flex items-center gap-2 md:gap-3 rounded-xl border-2 bg-white px-2 py-1.5 md:px-3 md:py-2"
-            style={{ borderColor: r.color }}
-          >
-            <div
-              className="w-6 h-6 md:w-7 md:h-7 rounded-full flex-shrink-0 border-2"
-              style={{ backgroundColor: r.badgeBg, borderColor: r.color }}
-            />
-            <div className="flex-1 min-w-0">
-              <div className="text-xs md:text-sm font-black font-display leading-tight" style={{ color: JMA_DARK }}>
-                {i + 1}. {r.title}
-              </div>
-              <div className="text-[10px] md:text-xs font-bold opacity-70 leading-tight truncate">
-                {r.subtitle}
-              </div>
-            </div>
-          </li>
-        ))}
-      </ol>
-    </div>
-  );
-}
-
-// ---- Teacher / parent copy -----------------------------------------
-function TeacherPanel1() {
-  return (
-    <>
-      <p className="mb-3">
-        Each of the <b>six music domains</b> — rhythm, ear training, keyboard, beat-making, songwriting,
-        music scholar — has three enamel badges representing competency tiers.
-      </p>
-      <div className="flex items-center justify-center gap-2 md:gap-3 my-4">
-        {[
+const TEACHER_PANELS = [
+  {
+    key: 'tiers',
+    portrait: DR_J,
+    quote: 'Three enamel tiers per music domain — Cadet, Pro, Master — advancement gated within each.',
+    accent: '#4285F4',
+    title: 'Skill Badges: Cadet · Pro · Master',
+    content: (
+      <TierChips
+        items={[
           { label: 'Cadet',  color: '#CD7F32', hint: 'Emerging' },
           { label: 'Pro',    color: '#94A3B8', hint: 'Consistent' },
           { label: 'Master', color: '#FFCC00', hint: 'Fluent' },
-        ].map((t) => (
-          <div
-            key={t.label}
-            className="flex flex-col items-center rounded-2xl border-4 px-3 py-2 md:px-4 md:py-3 bg-white shadow-[0_3px_0_0_var(--jma-dark)]"
-            style={{ borderColor: JMA_DARK }}
-          >
-            <div className="w-9 h-9 md:w-10 md:h-10 rounded-full border-2 mb-1" style={{ backgroundColor: t.color, borderColor: JMA_DARK }} />
-            <div className="text-[11px] md:text-xs font-black font-display uppercase" style={{ color: JMA_DARK }}>{t.label}</div>
-            <div className="text-[10px] font-bold opacity-60">{t.hint}</div>
-          </div>
-        ))}
-      </div>
-      <p className="text-sm">
-        Advancement within a domain is gated: <b>Pro</b> requires <b>Cadet</b>; <b>Master</b> requires <b>Pro</b>.
-      </p>
-    </>
-  );
-}
-
-function TeacherPanel2() {
-  return (
-    <>
-      <p className="mb-3">
-        The <b>Academy Rank</b> reflects <b>breadth of demonstrated skill</b> — not sticker volume.
-        Advancement requires competency across multiple domains, preventing single-game grinding.
-      </p>
-      <div className="rounded-2xl border-4 p-3 md:p-4 bg-[#FFF8D6]" style={{ borderColor: JMA_DARK }}>
-        <div className="text-xs md:text-sm font-black font-display mb-2" style={{ color: JMA_DARK }}>
-          Example threshold — <span className="underline">Performer</span>:
+        ]}
+      />
+    ),
+  },
+  {
+    key: 'breadth',
+    portrait: DR_J_DETECTIVE,
+    quote: 'Academy Rank tracks breadth — not sticker volume. Grinding a single game won\u2019t advance the ladder.',
+    accent: '#AF52DE',
+    title: 'Ranks reward breadth',
+    content: (
+      <div className="rounded-2xl border-[3px] p-3 bg-[#FFF8D6]" style={{ borderColor: JMA_DARK }}>
+        <div className="text-xs md:text-sm font-black font-display mb-1" style={{ color: JMA_DARK }}>
+          Example threshold — Performer:
         </div>
-        <ul className="text-xs md:text-sm space-y-1 list-disc pl-5" style={{ color: JMA_DARK }}>
-          <li>Pro-tier badge in <b>3 distinct</b> music domains</li>
-          <li>Cadet prerequisite already satisfied in each</li>
+        <ul className="text-[11px] md:text-xs space-y-0.5 list-disc pl-5" style={{ color: JMA_DARK }}>
+          <li>Pro badge in <b>3 distinct</b> domains</li>
+          <li>Cadet prerequisite satisfied in each</li>
         </ul>
       </div>
-      <p className="text-sm mt-3 opacity-80">
-        Reaching Maestro requires nine separate skill proofs (3 domains × 3 tiers).
-      </p>
-    </>
-  );
-}
+    ),
+  },
+  {
+    key: 'ladder',
+    portrait: DR_J_GRAD,
+    quote: 'Seven ranks. Each surfaces a clean requirement — great for printed report cards.',
+    accent: '#FFCC00',
+    title: 'The Rank Ladder',
+    content: <LadderList formal={true} />,
+  },
+];
 
-function TeacherPanel3() {
-  return (
-    <div>
-      <p className="text-sm mb-3">
-        <b>Seven-rank ladder.</b> Each rank surfaces a specific requirement so progress is legible to students and printable for reports.
-      </p>
-      <ol className="space-y-1.5" data-testid="rank-ladder-list">
-        {RANKS.map((r, i) => (
-          <li
-            key={r.id}
-            className="flex items-center gap-2 md:gap-3 rounded-xl border-2 bg-white px-2 py-1.5 md:px-3 md:py-2"
-            style={{ borderColor: r.color }}
-          >
-            <div
-              className="w-6 h-6 md:w-7 md:h-7 rounded-full flex-shrink-0 border-2"
-              style={{ backgroundColor: r.badgeBg, borderColor: r.color }}
-            />
-            <div className="flex-1 min-w-0">
-              <div className="text-xs md:text-sm font-black font-display leading-tight" style={{ color: JMA_DARK }}>
-                {i + 1}. {r.title}
-              </div>
-              <div className="text-[10px] md:text-xs font-bold opacity-70 leading-tight truncate">
-                {r.requirement.label}
-              </div>
-            </div>
-          </li>
-        ))}
-      </ol>
-    </div>
-  );
-}
-
-// ---- Panel selection -----------------------------------------------
 function getPanels(teacherView) {
-  if (teacherView) {
-    return [
-      { ...PANEL_META[0], title: 'Skill Badges: Cadet · Pro · Master', body: <TeacherPanel1 /> },
-      { ...PANEL_META[1], title: 'Ranks reward breadth',                body: <TeacherPanel2 /> },
-      { ...PANEL_META[2], title: 'The Rank Ladder',                     body: <TeacherPanel3 /> },
-    ];
-  }
-  return [
-    { ...PANEL_META[0], title: 'Badges have 3 levels',      body: <KidPanel1 /> },
-    { ...PANEL_META[1], title: 'Try lots of stuff!',        body: <KidPanel2 /> },
-    { ...PANEL_META[2], title: 'The ranks',                 body: <KidPanel3 /> },
-  ];
+  return teacherView ? TEACHER_PANELS : KID_PANELS;
 }
 
+// ------------------------------------------------------------------
+// The modal itself
+// ------------------------------------------------------------------
 export default function HowRanksWorkModal({ open, onClose, teacherView = false }) {
   const [step, setStep] = useState(0);
+  const [powKey, setPowKey] = useState(0);
+  const audienceLabel = teacherView ? 'For grown-ups' : 'Missions Guide';
+
+  // Fire the POW! starburst whenever the panel index changes.
+  const prevStep = useRef(step);
+  useEffect(() => {
+    if (prevStep.current !== step) {
+      setPowKey((k) => k + 1);
+      prevStep.current = step;
+    }
+  }, [step]);
+
+  // Reset to the first panel every time the modal reopens.
+  useEffect(() => {
+    if (open) {
+      setStep(0);
+      prevStep.current = 0;
+    }
+  }, [open]);
 
   if (!open) return null;
 
   const panels = getPanels(teacherView);
   const panel = panels[step] || panels[0];
-  const Icon = panel.icon;
   const canPrev = step > 0;
   const canNext = step < panels.length - 1;
-
-  const audienceLabel = teacherView ? 'For grown-ups' : 'How ranks work';
 
   return (
     <AnimatePresence>
@@ -227,29 +290,26 @@ export default function HowRanksWorkModal({ open, onClose, teacherView = false }
       >
         <motion.div
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-md rounded-3xl bg-white border-4 shadow-[0_8px_0_0_var(--jma-dark)] overflow-hidden"
+          className="relative w-full max-w-lg rounded-3xl bg-white border-4 shadow-[0_10px_0_0_var(--jma-dark)] overflow-hidden"
           style={{ borderColor: JMA_DARK }}
-          initial={{ y: 30, scale: 0.95, opacity: 0 }}
-          animate={{ y: 0, scale: 1, opacity: 1 }}
+          initial={{ y: 30, scale: 0.9, opacity: 0, rotate: -1 }}
+          animate={{ y: 0, scale: 1, opacity: 1, rotate: 0 }}
           exit={{ y: 20, scale: 0.95, opacity: 0 }}
-          transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 20 }}
         >
-          {/* Header */}
+          {/* Header — arcade marquee stripe */}
           <div
             className="flex items-center gap-3 px-4 py-3 border-b-4"
-            style={{ backgroundColor: panel.accent, borderColor: JMA_DARK }}
+            style={{
+              background: `linear-gradient(180deg, ${panel.accent} 0%, ${panel.accent}CC 100%)`,
+              borderColor: JMA_DARK,
+            }}
           >
-            <div
-              className="w-9 h-9 rounded-full bg-white border-2 flex items-center justify-center flex-shrink-0"
-              style={{ borderColor: JMA_DARK }}
-            >
-              <Icon className="w-5 h-5" style={{ color: JMA_DARK }} />
-            </div>
             <div className="flex-1 min-w-0">
-              <div className="text-[10px] font-black uppercase tracking-wider text-white opacity-80">
-                {audienceLabel} · {step + 1}/{panels.length}
+              <div className="text-[10px] font-black uppercase tracking-wider text-white opacity-90">
+                {audienceLabel} · Issue #{step + 1} of {panels.length}
               </div>
-              <div className="text-base md:text-lg font-black font-display text-white leading-tight truncate">
+              <div className="text-lg md:text-xl font-black font-display text-white leading-tight truncate">
                 {panel.title}
               </div>
             </div>
@@ -264,9 +324,58 @@ export default function HowRanksWorkModal({ open, onClose, teacherView = false }
             </button>
           </div>
 
-          {/* Body */}
-          <div className="px-4 py-4 md:px-5 md:py-5 text-[13px] md:text-sm" style={{ color: JMA_DARK }}>
-            {panel.body}
+          {/* Comic-strip body — halftone bg, mascot + speech, main content. */}
+          <div className="jma-halftone relative">
+            <PowBurst trigger={powKey} label="POW!" />
+            <div className="p-4 md:p-5">
+              {/* Mascot row — Dr. J on the left, speech bubble to his right. */}
+              <div className="flex items-end gap-3 mb-4">
+                <div className="flex-shrink-0 w-20 md:w-24">
+                  <AnimatePresence mode="wait">
+                    <motion.img
+                      key={panel.key}
+                      src={panel.portrait}
+                      alt=""
+                      draggable={false}
+                      className="w-full h-auto"
+                      style={{ filter: 'drop-shadow(0 4px 0 rgba(10,37,64,0.35))' }}
+                      initial={{ scale: 0.6, rotate: -12, opacity: 0 }}
+                      animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                      exit={{ scale: 0.6, rotate: 12, opacity: 0 }}
+                      transition={{ type: 'spring', stiffness: 320, damping: 18 }}
+                    />
+                  </AnimatePresence>
+                </div>
+                <div className="flex-1 min-w-0 pb-2">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={panel.key + '-bubble'}
+                      initial={{ y: 8, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      exit={{ y: 8, opacity: 0 }}
+                      transition={{ duration: 0.18 }}
+                    >
+                      <SpeechBubble accent={panel.accent}>{panel.quote}</SpeechBubble>
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              {/* Content card — the actual info framed as a comic panel. */}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={panel.key + '-content'}
+                  className="rounded-2xl bg-white border-[3px] shadow-[0_5px_0_0_var(--jma-dark)] p-3 md:p-4"
+                  style={{ borderColor: JMA_DARK }}
+                  initial={{ scale: 0.92, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.92, opacity: 0 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 22 }}
+                >
+                  {panel.content}
+                </motion.div>
+              </AnimatePresence>
+            </div>
           </div>
 
           {/* Footer nav */}

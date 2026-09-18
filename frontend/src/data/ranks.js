@@ -83,7 +83,7 @@ export const RANKS = [
   {
     id: 'maestro',
     title: 'Maestro',
-    subtitle: 'Honorary JMA Faculty',
+    subtitle: 'Off the Charts',
     color: '#FFCC00',
     badgeBg: '#FFF8D6',
     icon: 'assets/characters/charlie-grad.png',

@@ -111,6 +111,27 @@
   0%,  100% { transform: rotate(-8deg); }
   50%       { transform: rotate(8deg);  }
 }
+
+/* Comic-strip explainer — chunky "MISSIONS?" arcade button gently
+   bobs to invite a tap. */
+@keyframes missions-btn-bob {
+  0%, 100% { transform: translateY(0)    rotate(-2deg); }
+  50%      { transform: translateY(-4px) rotate(2deg);  }
+}
+
+/* POW! starburst that pops when the comic panel switches. */
+@keyframes pow-burst {
+  0%   { transform: translate(-50%, -50%) scale(0.2) rotate(-20deg); opacity: 0; }
+  40%  { transform: translate(-50%, -50%) scale(1.15) rotate(8deg);  opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1.6) rotate(20deg);  opacity: 0; }
+}
+
+/* Halftone dot pattern used inside comic panels — the classic
+   Ben-Day dot look. */
+.jma-halftone {
+  background-image: radial-gradient(circle, rgba(10,37,64,0.10) 1.2px, transparent 1.6px);
+  background-size: 10px 10px;
+}
 /* Sweeping spotlight cone (Music 101 curtain). */
 @keyframes tile-spotlight-sweep {
   0%,  100% { transform: rotate(-14deg); }
