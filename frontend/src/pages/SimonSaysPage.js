@@ -309,12 +309,12 @@ function SimonSaysPage({ score, setScore, gameStats, setGameStats, resetGame }) 
         <RoomCharacters room="kazoo-room" />
 
         <motion.h1
-          className="text-3xl md:text-5xl font-black mb-4 text-center"
+          className="text-3xl md:text-5xl font-black mb-4 text-center uppercase"
           style={{ color: 'var(--jma-dark)', fontFamily: "'Fredoka', cursive" }}
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
         >
-          Stew Kazoo Says
+          STEW KAZOO SAYS
         </motion.h1>
 
         <motion.div

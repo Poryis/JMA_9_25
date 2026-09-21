@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import "@/App.css";
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
+import ScrollToTop from "./components/ScrollToTop";
 import { AnimatePresence } from "framer-motion";
 import HomePage from "./pages/HomePage";
 import ForParentsPage from "./pages/ForParentsPage";
@@ -32,18 +33,11 @@ import AudioUnlockOverlay from "./components/AudioUnlockOverlay";
 import PlayerNamePrompt from "./components/PlayerNamePrompt";
 import usePlayTime from "./hooks/usePlayTime";
 
-// RootGate — smart routing at `/`. First-time visitors see the parent-
-// facing landing page (marketing pitch). Returning kids (with a stored
-// player profile OR the "add my name later" skip flag) skip straight to
-// the app Home. Anyone can reach either side via the header links.
+// RootGate — always send visitors straight to the app Home. The
+// parent-facing landing page (marketing pitch) is still reachable via
+// the "For Grown-ups" link in the header.
 function RootGate() {
-  const hasPlayer = (() => {
-    try {
-      return !!localStorage.getItem('jma_player_v1') ||
-             localStorage.getItem('jma_player_name_skipped_v1') === '1';
-    } catch { return false; }
-  })();
-  return hasPlayer ? <Navigate to="/home" replace /> : <ForParentsPage />;
+  return <Navigate to="/home" replace />;
 }
 
 function App() {
@@ -68,6 +62,7 @@ function App() {
         <StickerToast />
         <RankUpCelebration />
         <AnimatePresence mode="wait">
+          <ScrollToTop />
           <Routes>
             {/* Smart root gate:
                   - If the browser has a stored player profile (jma_player_v1)

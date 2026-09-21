@@ -1050,7 +1050,7 @@ export default function BoomGardenPage() {
                 boxShadow: '0 3px 0 0 rgba(0,0,0,0.35)',
               }}
             >
-              Pick your jam.
+              Pick your jam
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 flex-1">

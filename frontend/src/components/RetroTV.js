@@ -213,7 +213,7 @@ export default function RetroTV() {
           className="relative rounded-3xl"
           style={{
             background:
-              'repeating-linear-gradient(90deg, #8B5A2B 0px, #8B5A2B 2px, #A0673A 2px, #A0673A 5px), linear-gradient(180deg, #A0673A, #6B4423)',
+              'repeating-linear-gradient(90deg, #A67B4C 0px, #A67B4C 2px, #C89968 2px, #C89968 5px), linear-gradient(180deg, #C89968, #8B6540)',
             backgroundBlendMode: 'multiply',
             border: '5px solid #000',
             boxShadow:

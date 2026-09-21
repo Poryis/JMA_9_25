@@ -186,7 +186,7 @@
    its identity. Timing: 9s total, three ~2.9s holds, ~120ms snaps. */
 @keyframes jmatv-letter-cycle {
   0%,   32%    { background-color: #FF0000; }
-  33.5%, 65.5% { background-color: #0012FF; }
+  33.5%, 65.5% { background-color: #4285F4; }
   67%,  99%    { background-color: #FFFFFF; }
   100%         { background-color: #FF0000; }
 }

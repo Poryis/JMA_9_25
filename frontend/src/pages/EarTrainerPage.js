@@ -179,7 +179,7 @@ function EarTrainerPage() {
         data-testid="ear-trainer-tempo"
         style={{ backgroundImage: 'url(assets/backgrounds/beach.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}
       >
-        <GameHeader title="Snail or Cheetah?" showHomeButton={true} backLink={{ to: '/learn', label: 'Learn' }} />
+        <GameHeader title="SNAIL OR CHEETAH?" showHomeButton={true} backLink={{ to: '/learn', label: 'Learn' }} />
         <FullscreenButton />
         <RoomCharacters room="ear-quest" />
         <motion.h1 className="text-2xl md:text-3xl font-black mb-4 text-center font-display" style={{ color: 'var(--jma-dark)' }} initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
@@ -202,8 +202,8 @@ function EarTrainerPage() {
         <FullscreenButton />
         <RoomCharacters room="ear-quest" />
 
-        <motion.h1 className="text-3xl md:text-5xl font-black mb-4 text-center font-display" style={{ color: 'var(--jma-dark)' }} initial={{ y: -30, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
-          Ear Quest
+        <motion.h1 className="text-3xl md:text-5xl font-black mb-4 text-center font-display uppercase" style={{ color: 'var(--jma-dark)' }} initial={{ y: -30, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
+          EAR QUEST
         </motion.h1>
 
         <motion.div className="game-card p-6 mb-6 max-w-md text-center" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2 }}>

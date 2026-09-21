@@ -553,11 +553,11 @@ export default function NameThatNotePage() {
         <RoomCharacters room="name-that-note" />
 
         <motion.h1
-          className="text-3xl md:text-5xl font-black mb-1 text-center font-display"
+          className="text-3xl md:text-5xl font-black mb-1 text-center font-display uppercase"
           style={{ color: 'white', textShadow: '3px 3px 0 var(--jma-dark), 5px 5px 0 rgba(0,0,0,0.5)' }}
           initial={{ y: -30, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
         >
-          Name That Note
+          NAME THAT NOTE
         </motion.h1>
         <motion.p
           className="text-sm md:text-lg font-bold mb-4 text-center"

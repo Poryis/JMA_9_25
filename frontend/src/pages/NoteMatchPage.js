@@ -206,12 +206,12 @@ export default function NoteMatchPage() {
         <RoomCharacters room="note-match" />
 
         <motion.h1
-          className="text-3xl md:text-5xl font-black mb-2 text-center font-display"
+          className="text-3xl md:text-5xl font-black mb-2 text-center font-display uppercase"
           style={{ color: 'var(--jma-dark)' }}
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
         >
-          Note Match
+          NOTE MATCH
         </motion.h1>
         <motion.p
           className="text-base md:text-lg font-bold mb-4 text-center"
@@ -272,7 +272,7 @@ export default function NoteMatchPage() {
       data-testid="note-match-playing"
       style={{ backgroundImage: 'url(assets/backgrounds/boat.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}
     >
-      <GameHeader title="Note Match" subtitle={level.name} showHomeButton={true} backLink={{ to: '/play', label: 'Play' }} />
+      <GameHeader title="NOTE MATCH" subtitle={level.name} showHomeButton={true} backLink={{ to: '/play', label: 'Play' }} />
       <RoomCharacters room="note-match" />
 
       <main className="flex-1 flex flex-col items-center pt-20 md:pt-20 pb-6 px-3">

@@ -278,11 +278,11 @@ export default function SightReadingPage() {
         <RoomCharacters room="sight-reading" />
 
         <motion.h1
-          className="text-3xl md:text-5xl font-black mb-2 text-center font-display"
+          className="text-3xl md:text-5xl font-black mb-2 text-center font-display uppercase"
           style={{ color: 'white', textShadow: '3px 3px 0 var(--jma-dark), 5px 5px 0 rgba(0,0,0,0.5)' }}
           initial={{ y: -30, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
         >
-          Sight-Reading Sprint
+          SIGHT-READING SPRINT
         </motion.h1>
         <motion.p
           className="text-base md:text-lg font-bold mb-4 text-center"
@@ -356,7 +356,7 @@ export default function SightReadingPage() {
         backgroundPosition: 'center',
       }}
     >
-      <GameHeader title="Sight-Read" subtitle={level.name} showHomeButton={true} backLink={{ to: '/play', label: 'Play' }} />
+      <GameHeader title="SIGHT-READING SPRINT" subtitle={level.name} showHomeButton={true} backLink={{ to: '/play', label: 'Play' }} />
       <RoomCharacters room="sight-reading" />
 
       <main className="flex-1 flex flex-col items-center pt-20 md:pt-20 pb-6 px-3">

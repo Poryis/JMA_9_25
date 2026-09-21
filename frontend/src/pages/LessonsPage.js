@@ -189,7 +189,7 @@ export default function LessonsPage() {
                   '4px 4px 0 var(--jma-dark), 7px 7px 0 #7A1F1F, 10px 10px 22px rgba(0,0,0,0.5)',
               }}
             >
-              Season 1
+              Music 101
             </h1>
             <p
               className="mt-2 text-sm md:text-base font-black uppercase tracking-widest inline-block px-3 py-1 rounded-full"

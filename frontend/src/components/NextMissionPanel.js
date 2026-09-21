@@ -60,8 +60,8 @@ export default function NextMissionPanel() {
       style={{
         borderColor: 'var(--jma-dark)',
         borderWidth: 3,
-        background: `linear-gradient(135deg, ${domain.color}22 0%, ${domain.color}55 100%)`,
-        boxShadow: '0 4px 0 0 var(--jma-dark)',
+        background: 'white',
+        boxShadow: `0 4px 0 0 var(--jma-dark), inset 0 0 0 3px ${domain.color}`,
         height: 56,
       }}
       initial={{ scale: 0.95, opacity: 0, y: 6 }}

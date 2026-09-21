@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Play, Square, Trash2, Plus, Minus, Volume2, Circle, Download } from 'lucide-react';
+import { Play, Square, Plus, Minus, Volume2, Circle, Download } from 'lucide-react';
 import { GameHeader } from '../components/GameUI';
 import RoomCharacters from '../components/RoomCharacters';
 import { FullscreenButton } from '../components/FullscreenButton';
@@ -460,36 +460,9 @@ function LoopStudioPage() {
               '0 10px 0 rgba(0,0,0,0.35), inset 0 3px 0 rgba(255,255,255,0.08), inset 0 -6px 0 rgba(0,0,0,0.35)',
           }}
         >
-          {/* --- KID DECALS: hand-placed stickers on the deck body. Absolute
-              positioned, slightly rotated so they feel peeled-and-stuck. */}
+          {/* Name tag if player has entered a name — the star + shield
+              decals were removed after beta testing (§B cleanup). */}
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-[32px]">
-            {/* Star sticker top-left */}
-            <div
-              className="absolute"
-              style={{ top: -14, left: 18, transform: 'rotate(-14deg)', filter: 'drop-shadow(0 2px 0 rgba(0,0,0,0.35))' }}
-            >
-              <svg width="46" height="46" viewBox="0 0 40 40">
-                <polygon
-                  points="20,3 24,15 37,15 26,23 30,36 20,28 10,36 14,23 3,15 16,15"
-                  fill="#FFCC00"
-                  stroke="#0A1626"
-                  strokeWidth="2.5"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            {/* JMA shield sticker bottom-right */}
-            <div
-              className="absolute"
-              style={{ bottom: -10, right: -6, transform: 'rotate(11deg)', filter: 'drop-shadow(0 2px 0 rgba(0,0,0,0.35))' }}
-            >
-              <svg width="52" height="56" viewBox="0 0 52 56">
-                <path d="M26 2 L48 10 V28 C48 42 38 50 26 54 C14 50 4 42 4 28 V10 Z"
-                  fill="#4CD964" stroke="#0A1626" strokeWidth="2.5" strokeLinejoin="round" />
-                <text x="26" y="34" textAnchor="middle" fontSize="15" fontWeight="900" fill="#0A1626" fontFamily="ui-sans-serif, system-ui">JMA</text>
-              </svg>
-            </div>
-            {/* Name tag if player has entered a name */}
             {playerName && (
               <div
                 className="absolute"
@@ -630,7 +603,7 @@ function LoopStudioPage() {
               data-testid="clear-all"
               title="Clear all"
             >
-              <Trash2 className="w-4 h-4" />
+              <span className="text-[10px] md:text-xs font-black uppercase tracking-wider px-1">Clear</span>
             </button>
 
             <div className="flex-1 min-w-0" />
