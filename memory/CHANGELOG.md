@@ -1,5 +1,47 @@
 # Changelog
 
+## Beat Lab canonical track order + Sight-Reading tier rename + Clear button width (Feb 2026)
+
+**User request**: In Beat Lab, tracks should stay in order — bells (Do, Re, Mi…) together, drums together, turntable together — regardless of how they were added. Sight-Reading Sprint tiers should read Easy / Medium / Hard / Wizard. Clear button text was overflowing its box; widen it.
+
+### `pages/LoopStudioPage.js` — canonical track order
+- Added a module-scope lookup + sort helper right after `TRACK_PRESETS`:
+  ```js
+  const TRACK_ORDER = TRACK_PRESETS.reduce((m, t, i) => { m[t.id] = i; return m; }, {});
+  const sortTracks = (ids) => [...ids].sort((a, b) => (TRACK_ORDER[a] ?? 999) - (TRACK_ORDER[b] ?? 999));
+  ```
+- Applied to three entry points that mutate `activeTracks`:
+  - Initial `useState(() => sortTracks([...]))` (defensive; the default set is already ordered).
+  - `addTrack` → `setActiveTracks(prev => sortTracks([...prev, trackId]))` so `+ Add` chips insert into the right slot.
+  - `loadPreset` → `setActiveTracks(prev => sortTracks([...new Set([...prev, ...trackIds])]))` so presets like "Scratch Mix" (which drop drums + scratches together) don't scramble the row.
+- Verified: adding `scratch_pull → bells_HC → drum_crash → bells_D` in that reversed order rendered as `bells_C, bells_D, bells_E, bells_G, bells_HC, drum_kick, drum_snare, drum_hihat, drum_crash, scratch_pull`.
+
+### `pages/LoopStudioPage.js` — Clear button width
+- Was `w-9 h-9` (fixed 36×36) with `px-1` on the inner span — 5-letter "CLEAR" label at 10–12 px overflowed on some viewports.
+- Now `h-9 px-3` auto-width pill. Measured post-fix: button 69 px wide, text 41 px wide, text fits fully inside (asserted in the smoke test).
+
+### `pages/SightReadingPage.js` — tier rename
+- LEVELS names updated: Cadet → **Easy**, Pro → **Medium**, Master → **Hard**, Wizard kept.
+- Internal object keys (`cadet/pro/master/wizard`) left untouched so:
+  - Existing `jma_sight_reading_best_v1` localStorage best scores keep working.
+  - The `tier: 'cadet'|'pro'|'master'` mapping (used for the `scholar` achievement ladder) is unchanged.
+- Wizard still carries the ⚡ VERY HARD gradient badge next to its name.
+
+### QA
+- Smoke test `/sight-reading`: all 4 tier buttons render with the new labels.
+- Smoke test `/loop-studio`:
+  - `rendered_track_order = ['track-label-bells_C', 'track-label-bells_D', 'track-label-bells_E', 'track-label-bells_G', 'track-label-bells_HC', 'track-label-drum_kick', 'track-label-drum_snare', 'track-label-drum_hihat', 'track-label-drum_crash', 'track-label-scratch_pull']`.
+  - `clear_button_rect.width=69`, `clear_text_rect.width=41`, `clear_text_fits_inside_button=True`.
+- Webpack compile clean; pre-existing eslint warnings unrelated.
+
+### Punch-list ticks
+- ✅ Sight Reading Wizard-tier standardization (Easy / Medium / Hard / Wizard).
+- ✅ Puns with Finn episode renames — already completed in a prior session, formally closed out here.
+- ✅ Beat Lab track ordering.
+- ✅ Beat Lab Clear button width.
+
+
+
 ## Beat Lab latency trim — deferred audio preload + memoized mascots (Feb 2026)
 
 **User request**: Beat Lab chugs on the first tap. Defer the 12 audio stems + memoize mascots so mobile Beat Lab stops chugging.

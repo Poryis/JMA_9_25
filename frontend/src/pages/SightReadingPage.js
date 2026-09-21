@@ -33,21 +33,21 @@ const CARDS_PER_RUN = 5;
 // Each card spec is [noteCount, secondsToPlay].
 const LEVELS = {
   cadet: {
-    name: 'Cadet',
+    name: 'Easy',
     description: '5 cards · 3–4 notes · gentle ramp',
     cardSpecs: [[3, 20], [3, 20], [3, 18], [4, 18], [4, 16]],
     pool: LOW_NOTES,
     tier: 'cadet',
   },
   pro: {
-    name: 'Pro',
+    name: 'Medium',
     description: '5 cards · 3–5 notes · tighter timing',
     cardSpecs: [[3, 18], [3, 18], [4, 16], [4, 14], [5, 14]],
     pool: LOW_NOTES,
     tier: 'pro',
   },
   master: {
-    name: 'Master',
+    name: 'Hard',
     description: '5 cards · 4–5 notes · full 8-bell range',
     cardSpecs: [[4, 16], [4, 14], [5, 14], [5, 12], [5, 12]],
     pool: ALL_NOTES,

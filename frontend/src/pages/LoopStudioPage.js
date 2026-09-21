@@ -58,6 +58,11 @@ const SharkyMascot = memo(function SharkyMascot({ isPlaying, bpm }) {
   );
 });
 
+// Canonical order for the deck: bells (low → high), then drums, then
+// scratches. `sortTracks` reindexes any track-id list by their position
+// in TRACK_PRESETS so kids never see "Do, Kick, Mi, Snare, Re..." — the
+// row always reads bells → drums → turntable regardless of the order
+// tracks were added.
 // Available tracks with instruments (bells hidden visually but still playable via sequencer)
 const TRACK_PRESETS = [
   { id: 'bells_C', label: 'Do (C)', type: 'bell', note: 'C', color: '#FF3B30' },
@@ -76,6 +81,14 @@ const TRACK_PRESETS = [
   { id: 'scratch_push', label: 'Scratch Push', type: 'scratch', note: 'scratchPush', color: '#16A085' },
   { id: 'scratch_pp', label: 'Scratch P/P', type: 'scratch', note: 'scratchPushPull', color: '#2ECC71' },
 ];
+
+// Canonical row order: bells (low → high) → drums → scratches. Kids add
+// tracks in any order and load presets that dump a mix; the deck row
+// should still always read Do, Re, Mi… then Kick/Snare/Hi-Hat… then
+// turntable. `sortTracks` reindexes any track-id list by position in
+// TRACK_PRESETS.
+const TRACK_ORDER = TRACK_PRESETS.reduce((m, t, i) => { m[t.id] = i; return m; }, {});
+const sortTracks = (ids) => [...ids].sort((a, b) => (TRACK_ORDER[a] ?? 999) - (TRACK_ORDER[b] ?? 999));
 
 // All loop presets (drums, scratches, AND bells)
 const LOOP_PRESETS = {
@@ -171,7 +184,7 @@ function LoopStudioPage() {
   const [currentStep, setCurrentStep] = useState(-1);
   const [bpm, setBpm] = useState(DEFAULT_BPM);
   const [totalSteps, setTotalSteps] = useState(16);
-  const [activeTracks, setActiveTracks] = useState(['drum_kick', 'drum_snare', 'drum_hihat', 'bells_C', 'bells_E', 'bells_G']);
+  const [activeTracks, setActiveTracks] = useState(() => sortTracks(['drum_kick', 'drum_snare', 'drum_hihat', 'bells_C', 'bells_E', 'bells_G']));
   const [grid, setGrid] = useState({});
   const [mutedTracks, setMutedTracks] = useState(new Set());
   // For turntable scratch visual (kept as state since spin animation needs it)
@@ -396,7 +409,7 @@ function LoopStudioPage() {
     const preset = LOOP_PRESETS[presetName];
     if (!preset) return;
     const trackIds = Object.keys(preset);
-    setActiveTracks(prev => [...new Set([...prev, ...trackIds])]);
+    setActiveTracks(prev => sortTracks([...new Set([...prev, ...trackIds])]));
     setGrid(prev => {
       const newGrid = { ...prev };
       Object.entries(preset).forEach(([trackId, steps]) => {
@@ -429,7 +442,7 @@ function LoopStudioPage() {
 
   const addTrack = useCallback((trackId) => {
     if (!activeTracks.includes(trackId)) {
-      setActiveTracks(prev => [...prev, trackId]);
+      setActiveTracks(prev => sortTracks([...prev, trackId]));
     }
   }, [activeTracks]);
 
@@ -643,9 +656,13 @@ function LoopStudioPage() {
               ))}
             </div>
 
-            {/* Clear */}
+            {/* Clear — needs enough horizontal room for the "CLEAR" label
+                (was w-9 h-9 fixed square which pushed the text outside
+                the button on some screens). Auto-width w/ chunky padding
+                keeps the pill visually balanced against BPM +/- next to
+                it. */}
             <button
-              className="w-9 h-9 rounded-lg flex items-center justify-center"
+              className="h-9 px-3 rounded-lg flex items-center justify-center"
               style={{
                 background: '#3E5471',
                 color: '#FF6B6B',
@@ -656,7 +673,7 @@ function LoopStudioPage() {
               data-testid="clear-all"
               title="Clear all"
             >
-              <span className="text-[10px] md:text-xs font-black uppercase tracking-wider px-1">Clear</span>
+              <span className="text-[10px] md:text-xs font-black uppercase tracking-wider">Clear</span>
             </button>
 
             <div className="flex-1 min-w-0" />
