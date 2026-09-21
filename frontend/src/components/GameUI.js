@@ -162,10 +162,10 @@ function GameHeader({ title, subtitle, score, streak, showHomeButton = true, bac
                 animate={{
                   // Slightly larger + rounder pill when the shield is
                   // hidden so the label stays tap-friendly on its own.
-                  paddingLeft: collapsed ? 12 : 8,
-                  paddingRight: collapsed ? 12 : 8,
-                  paddingTop: collapsed ? 4 : 0,
-                  paddingBottom: collapsed ? 4 : 0,
+                  paddingLeft: collapsed ? 14 : 10,
+                  paddingRight: collapsed ? 14 : 10,
+                  paddingTop: collapsed ? 5 : 1,
+                  paddingBottom: collapsed ? 5 : 1,
                   marginTop: collapsed ? 0 : 4,
                 }}
                 transition={{ type: 'spring', stiffness: 320, damping: 26 }}
@@ -173,7 +173,7 @@ function GameHeader({ title, subtitle, score, streak, showHomeButton = true, bac
                   color: 'white',
                   backgroundColor: 'var(--jma-dark)',
                   textShadow: '1px 1px 0 rgba(0,0,0,0.3)',
-                  fontSize: collapsed ? 12 : 10,
+                  fontSize: collapsed ? 15 : 13,
                   lineHeight: 1,
                   boxShadow: collapsed ? '0 3px 0 0 rgba(0,0,0,0.35)' : 'none',
                 }}
