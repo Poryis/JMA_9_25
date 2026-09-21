@@ -193,7 +193,7 @@ function LoopStudioPage() {
   // Idle-state LCD chatter — while nothing is playing, the STEP readout
   // cycles a few playful prompts so the deck feels alive and inviting to
   // kids instead of showing a static "--/16".
-  const IDLE_MESSAGES = ['READY?', 'TAP PADS', 'MAKE BEAT', 'LETS JAM'];
+  const IDLE_MESSAGES = ['READY?', 'TAP PADS', 'MAKE BEATS', 'LETS JAM'];
   const [idleMsgIndex, setIdleMsgIndex] = useState(0);
   useEffect(() => {
     if (isPlaying) return;

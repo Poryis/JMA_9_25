@@ -1176,7 +1176,11 @@ export default function RobotBoogiePage() {
         }}
       />
 
-      <GameHeader title="ROBOT BOOGIE" showHomeButton={true} />
+      {/* Title deliberately omitted — the character lineup + Time
+          Machine ARE the branding, and the standard arcade marquee
+          was crowding the active band on landscape phones. Back-pill
+          alone keeps navigation without covering game content. */}
+      <GameHeader showHomeButton={true} />
 
       {/* Reset chip + speed slider row. Positioned below the fixed
           GameHeader — pt-20 on mobile (the "Back" button pill is ~76px
