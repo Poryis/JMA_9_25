@@ -187,22 +187,39 @@ function GameHeader({ title, subtitle, score, streak, showHomeButton = true, bac
         {/* Title. Accepts a plain string (default Arcade Marquee) OR a
             ReactNode (per-game custom treatment — Robot Boogie uses
             this for its chrome/futurist title). Optional `subtitle`
-            prop renders a small chip under the marquee. */}
-        {title && (
-          typeof title === 'string' ? (
-            <motion.div
-              className="flex flex-col items-center pointer-events-auto pt-1 md:pt-0 min-w-0 flex-shrink"
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ type: 'spring', stiffness: 240 }}
-            >
-              <MarqueeTitle text={title} />
-              {subtitle && <SubtitleChip text={subtitle} />}
-            </motion.div>
-          ) : (
-            <div className="pointer-events-auto pt-1 md:pt-0">{title}</div>
-          )
-        )}
+            prop renders a small chip under the marquee.
+            Same scroll-collapse dance as the harp back button — once
+            the kid scrolls past the top the title tucks up and out of
+            the way so it stops covering game content. It springs back
+            when scroll returns to y=0. */}
+        <AnimatePresence initial={false}>
+          {title && !collapsed && (
+            typeof title === 'string' ? (
+              <motion.div
+                key="header-title-string"
+                className="flex flex-col items-center pointer-events-auto pt-1 md:pt-0 min-w-0 flex-shrink"
+                initial={{ y: -20, opacity: 0, scale: 0.85 }}
+                animate={{ y: 0, opacity: 1, scale: 1 }}
+                exit={{ y: -24, opacity: 0, scale: 0.85 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+              >
+                <MarqueeTitle text={title} />
+                {subtitle && <SubtitleChip text={subtitle} />}
+              </motion.div>
+            ) : (
+              <motion.div
+                key="header-title-node"
+                className="pointer-events-auto pt-1 md:pt-0"
+                initial={{ y: -20, opacity: 0, scale: 0.85 }}
+                animate={{ y: 0, opacity: 1, scale: 1 }}
+                exit={{ y: -24, opacity: 0, scale: 0.85 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+              >
+                {title}
+              </motion.div>
+            )
+          )}
+        </AnimatePresence>
 
         {/* Score display */}
         <div className="flex items-center gap-3 pointer-events-auto">
