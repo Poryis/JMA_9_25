@@ -1,4 +1,5 @@
-import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Volume2 } from 'lucide-react';
 import HarpIcon from './HarpIcon';
@@ -79,6 +80,21 @@ function GameHeader({ title, subtitle, score, streak, showHomeButton = true, bac
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Scroll-aware back button — when the kid has scrolled past the top,
+  // the chunky harp/CRT shield collapses out of the way and only the
+  // small "BACK" text pill (grown a touch for easy tapping) remains.
+  // Back at scroll y=0 the full shield reappears. Threshold intentionally
+  // small (24px) so the collapse fires early — the whole point is to
+  // stop the shield from blocking game content the moment the user
+  // starts to interact below the fold.
+  const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => {
+    const check = () => setCollapsed((window.scrollY || 0) > 24);
+    check();
+    window.addEventListener('scroll', check, { passive: true });
+    return () => window.removeEventListener('scroll', check);
+  }, []);
+
   // The harp button acts as a "Back" button. By default we use browser
   // history (navigate(-1)) which works for most flows, but pages can
   // pass an explicit `backTo` route to force back to a specific parent
@@ -111,30 +127,59 @@ function GameHeader({ title, subtitle, score, streak, showHomeButton = true, bac
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95, y: 2 }}
             >
-              <div
-                className="rounded-xl md:rounded-2xl border-2 md:border-3 border-[var(--jma-dark)] shadow-[0_3px_0_0_var(--jma-dark)] md:shadow-[0_4px_0_0_var(--jma-dark)] group-hover:shadow-[0_6px_0_0_var(--jma-dark)] transition-shadow w-12 h-12 md:w-14 md:h-14 lg:w-20 lg:h-20 overflow-hidden"
-                style={{
-                  backgroundColor: 'var(--jma-dark)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: 0,
+              {/* Harp / CRT shield — collapses out on scroll so it stops
+                  blocking game content below the fold. Framer animates
+                  height + opacity + scale together for a smooth tuck. */}
+              <AnimatePresence initial={false}>
+                {!collapsed && (
+                  <motion.div
+                    key="back-shield"
+                    initial={{ opacity: 0, height: 0, scale: 0.6 }}
+                    animate={{ opacity: 1, height: 'auto', scale: 1 }}
+                    exit={{ opacity: 0, height: 0, scale: 0.6 }}
+                    transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+                    style={{ overflow: 'hidden' }}
+                  >
+                    <div
+                      className="rounded-xl md:rounded-2xl border-2 md:border-3 border-[var(--jma-dark)] shadow-[0_3px_0_0_var(--jma-dark)] md:shadow-[0_4px_0_0_var(--jma-dark)] group-hover:shadow-[0_6px_0_0_var(--jma-dark)] transition-shadow w-12 h-12 md:w-14 md:h-14 lg:w-20 lg:h-20 overflow-hidden"
+                      style={{
+                        backgroundColor: 'var(--jma-dark)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: 0,
+                      }}
+                    >
+                      <div style={{ width: '118%', height: '118%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <BackIcon />
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <motion.span
+                className="font-black uppercase tracking-wide rounded-full"
+                animate={{
+                  // Slightly larger + rounder pill when the shield is
+                  // hidden so the label stays tap-friendly on its own.
+                  paddingLeft: collapsed ? 12 : 8,
+                  paddingRight: collapsed ? 12 : 8,
+                  paddingTop: collapsed ? 4 : 0,
+                  paddingBottom: collapsed ? 4 : 0,
+                  marginTop: collapsed ? 0 : 4,
                 }}
-              >
-                <div style={{ width: '118%', height: '118%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <BackIcon />
-                </div>
-              </div>
-              <span
-                className="text-[10px] lg:text-sm font-black uppercase tracking-wide mt-1 px-2 lg:px-2.5 rounded-full"
+                transition={{ type: 'spring', stiffness: 320, damping: 26 }}
                 style={{
                   color: 'white',
                   backgroundColor: 'var(--jma-dark)',
                   textShadow: '1px 1px 0 rgba(0,0,0,0.3)',
+                  fontSize: collapsed ? 12 : 10,
+                  lineHeight: 1,
+                  boxShadow: collapsed ? '0 3px 0 0 rgba(0,0,0,0.35)' : 'none',
                 }}
               >
                 Back
-              </span>
+              </motion.span>
             </motion.button>
           </div>
         )}

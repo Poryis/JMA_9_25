@@ -1,5 +1,27 @@
 # Changelog
 
+## Scroll-collapsing back button (Feb 2026)
+
+**User request**: The harp back button keeps getting in the way. Anytime a screen with the back button is not scrolled to the top, the harp logo should disappear and only the small "BACK" text pill should remain.
+
+### `components/GameUI.js` — `GameHeader`
+- Added a `collapsed` state driven by a `window.scroll` listener with a 24 px threshold (deliberately small so the shield tucks away the moment a kid starts interacting below the fold).
+- Wrapped the shield container (the `w-12 h-12 md:w-14 md:h-14 lg:w-20 lg:h-20` dark box holding the harp / CRT icon) in an `<AnimatePresence>`; when `collapsed` is true it exits with `{ opacity: 0, height: 0, scale: 0.6 }` on a spring transition. `overflow: hidden` on the animated wrapper keeps the layout collapse smooth.
+- The "BACK" pill itself is now a `motion.span` that animates its own padding (8→12 px), font size (10→12 px), margin-top (4→0 px), and gains a `0 3px 0 rgba(0,0,0,0.35)` drop-shadow when collapsed so it reads as a proper standalone button instead of a stranded label.
+- Both animations share the same spring config (`stiffness: 320, damping: 26`) so the collapse feels like one motion, not two.
+
+### Global effect
+- No per-page changes needed — every route that uses `GameHeader` (every game, JMAtv, lessons, fun facts, sticker book…) inherits the behavior automatically.
+
+### QA
+- Automated on `/loop-studio` at 1400×900:
+  - Scroll y=0: `back-button` bbox height = 94 px, inner shield height = 80 px.
+  - Scroll y=240: `back-button` bbox height = 19.97 px, inner shield = `None` (removed from DOM via exit).
+  - Back to y=0: inner shield = 80 px (re-mounted).
+- Webpack compile clean; only pre-existing eslint warnings.
+
+
+
 ## JMAtv phone-portrait logo stacking (Feb 2026)
 
 **User request**: On phone (portrait/narrow), stack the JMAtv logo above the CRT — anywhere there's no room for horizontal viewing and layout goes vertical.
