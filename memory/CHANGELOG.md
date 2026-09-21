@@ -1,5 +1,19 @@
 # Changelog
 
+## Home JMAtv card — logo above the CRT on phones (Feb 2026)
+
+**User request**: On the home page's JMAtv card, when the layout collapses to vertical, the JMAtv logo should be ABOVE the TV (currently sits below).
+
+### `components/RetroTV.js`
+- The card's content row is `flex flex-col md:flex-row` — the two children were using `order-2 md:order-1` (logo) and `order-1 md:order-2` (TV), i.e. logo BELOW TV on mobile, logo LEFT of TV on desktop.
+- Flipped mobile orders so the logo is `order-1` and the TV is `order-2` at every breakpoint. Desktop layout unchanged (logo LEFT → TV CENTER → sunburst RIGHT).
+
+### QA
+- Phone 390×844: `logo_y=375.67`, `tv_y=564.95`, `logo_above_tv=True`.
+- Desktop 1400×900: `logo_x=323`, `tv_x=595`, `logo_left_of_tv=True` (horizontal layout preserved).
+
+
+
 ## Scroll-collapsing back button (Feb 2026)
 
 **User request**: The harp back button keeps getting in the way. Anytime a screen with the back button is not scrolled to the top, the harp logo should disappear and only the small "BACK" text pill should remain.

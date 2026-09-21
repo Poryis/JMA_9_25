@@ -114,8 +114,11 @@ export default function RetroTV() {
           {/* LEFT — animated JMAtv logo + tagline. Two-layer stacked mark
               matches /jmatv page: frame image hue-rotates through the
               spectrum while the JMA letters cycle complementary crayon
-              colors on a synced 12s beat. */}
-          <div className="flex flex-col items-center md:items-end text-center md:text-right flex-shrink-0 md:max-w-[260px] order-2 md:order-1">
+              colors on a synced 12s beat.
+              On phones (no md), this block stacks ABOVE the TV via
+              `order-1` — kids scroll and see the JMAtv brand first,
+              then the CRT with "Streaming Now" underneath. */}
+          <div className="flex flex-col items-center md:items-end text-center md:text-right flex-shrink-0 md:max-w-[260px] order-1 md:order-1">
             <div
               className="relative"
               style={{
@@ -156,8 +159,9 @@ export default function RetroTV() {
           </div>
 
           {/* CENTER — the TV itself. Non-interactive now; the outer card
-              is the single click target. */}
-          <div className="flex flex-col items-center order-1 md:order-2">
+              is the single click target. On phones (no md), this drops
+              BELOW the JMAtv logo via `order-2`. */}
+          <div className="flex flex-col items-center order-2 md:order-2">
             <motion.div
               data-testid="home-retro-tv-visual"
               className="relative rounded-3xl"
