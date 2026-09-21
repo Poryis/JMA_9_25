@@ -329,11 +329,13 @@ export function BgCrowd() {
 
 // ------------------------------------------------------------
 // Exported registry — used by the page to auto-cycle through them.
-// User dropped Cosmic Dance Floor, Silhouette Crowd, and Concert
-// Stage (brick + curtains). Remaining 3 rotate on a 35s timer.
+// Cycle is now just Lab + Navy. The Retro Arcade scene (with the neon
+// marquee frame + chasing bulbs) clashed with the ARCADE-STYLE header
+// marquee at the top of the page — two flashing marquees stacked on
+// each other reads as visual noise, not fun. BgArcade is kept in the
+// file (still exported for reference) but pulled out of BACKGROUNDS.
 // ------------------------------------------------------------
 export const BACKGROUNDS = [
   { id: 'lab',     label: 'Time-Machine Lab',      Comp: BgLab },
-  { id: 'arcade',  label: 'Retro Arcade',          Comp: BgArcade },
   { id: 'navy',    label: 'Deep Navy',             Comp: BgNavy },
 ];

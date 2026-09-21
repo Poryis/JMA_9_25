@@ -1176,11 +1176,10 @@ export default function RobotBoogiePage() {
         }}
       />
 
-      {/* Title deliberately omitted — the character lineup + Time
-          Machine ARE the branding, and the standard arcade marquee
-          was crowding the active band on landscape phones. Back-pill
-          alone keeps navigation without covering game content. */}
-      <GameHeader showHomeButton={true} />
+      {/* Title restored — the marquee-lights background was the conflict,
+          not the arcade header itself. That bg has been dropped from
+          the cycle registry so lab + navy are the only two left. */}
+      <GameHeader title="ROBOT BOOGIE" showHomeButton={true} />
 
       {/* Reset chip + speed slider row. Positioned below the fixed
           GameHeader — pt-20 on mobile (the "Back" button pill is ~76px
