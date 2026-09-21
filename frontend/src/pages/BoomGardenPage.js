@@ -160,15 +160,14 @@ function ModeTile({ mode, index, onPick }) {
               no long blurb. */}
           <div className="relative flex-1 min-w-0 flex flex-col justify-end">
             <h2
-              className="font-black font-display leading-[0.85] uppercase"
+              className="font-black font-display leading-[0.9] uppercase whitespace-nowrap"
               style={{
-                fontSize: 'clamp(17px, 2.5vw, 36px)',
+                fontSize: 'clamp(11px, 1.6vw, 22px)',
                 color: 'white',
-                WebkitTextStroke: 'clamp(2px, 0.5vw, 4px) var(--jma-dark)',
+                WebkitTextStroke: 'clamp(1.5px, 0.35vw, 3px) var(--jma-dark)',
                 paintOrder: 'stroke fill',
-                textShadow: `3px 3px 0 ${mode.accent}, 6px 6px 0 var(--jma-dark)`,
+                textShadow: `2px 2px 0 ${mode.accent}, 4px 4px 0 var(--jma-dark)`,
                 letterSpacing: '0.01em',
-                wordBreak: 'break-word',
               }}
             >
               {mode.label}
@@ -238,7 +237,7 @@ export default function BoomGardenPage() {
   // challenge without losing the musical feel. We re-derive the local
   // `BEAT_MS` from the base import + multiplier so the rest of the
   // component's existing `BEAT_MS` math keeps working unchanged.
-  const [tempoMul, setTempoMul] = useState(1);
+  const [tempoMul, setTempoMul] = useState(0.75);
   const BEAT_MS = Math.round(BASE_BEAT_MS / tempoMul);
   // Ref-backed mirror of BEAT_MS so the scheduleMetronome / pattern-audio /
   // visual-playhead useCallbacks read the LATEST tempo on every fire,

@@ -68,9 +68,9 @@ export default function TileDecoration({ type, accent }) {
       // Each cloud is a multi-lobe SVG shape (four overlapping puffs)
       // so they read as pillowy and cartoon-y instead of flat blobs.
       const clouds = [
-        { top: 20, size: 24, dur: 32, delay: 0 },
-        { top: 48, size: 30, dur: 44, delay: 12 },
-        { top: 30, size: 20, dur: 28, delay: 22 },
+        { top: 8,  size: 24, dur: 32, delay: 0 },
+        { top: 35, size: 30, dur: 44, delay: 12 },
+        { top: 18, size: 20, dur: 28, delay: 22 },
       ];
       return (
         <>
@@ -121,7 +121,7 @@ export default function TileDecoration({ type, accent }) {
               >
                 <svg
                   viewBox="0 0 100 60"
-                  style={{ width: '100%', height: '100%', overflow: 'visible' }}
+                  style={{ width: '100%', height: '100%', overflow: 'hidden' }}
                   preserveAspectRatio="none"
                 >
                   {/* Chunky multi-lobe cloud silhouette — four overlapping

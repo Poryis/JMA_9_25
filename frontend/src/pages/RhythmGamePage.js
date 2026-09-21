@@ -502,7 +502,7 @@ function RhythmGamePage({ score, setScore, gameStats, setGameStats, resetGame })
           </h1>
           <p className="text-xs md:text-sm mt-2 font-black uppercase tracking-widest inline-block px-3 py-1 rounded-full"
              style={{ color: '#FFF3A6', backgroundColor: 'rgba(0,0,0,0.35)', border: '2px solid #FF6BAA' }}>
-            Catch the falling notes · Boogie edition
+            Catch the falling notes
           </p>
         </motion.div>
 
