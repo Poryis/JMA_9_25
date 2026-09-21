@@ -141,7 +141,7 @@ function GameHeader({ title, subtitle, score, streak, showHomeButton = true, bac
                     style={{ overflow: 'hidden' }}
                   >
                     <div
-                      className="rounded-xl md:rounded-2xl border-2 md:border-3 border-[var(--jma-dark)] shadow-[0_3px_0_0_var(--jma-dark)] md:shadow-[0_4px_0_0_var(--jma-dark)] group-hover:shadow-[0_6px_0_0_var(--jma-dark)] transition-shadow w-12 h-12 md:w-14 md:h-14 lg:w-20 lg:h-20 overflow-hidden"
+                      className="rounded-xl md:rounded-2xl border-2 md:border-3 border-[var(--jma-dark)] shadow-[0_3px_0_0_var(--jma-dark)] md:shadow-[0_4px_0_0_var(--jma-dark)] group-hover:shadow-[0_6px_0_0_var(--jma-dark)] transition-shadow w-10 h-10 md:w-12 md:h-12 lg:w-16 lg:h-16 overflow-hidden"
                       style={{
                         backgroundColor: 'var(--jma-dark)',
                         display: 'flex',
