@@ -12,8 +12,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, X, Trophy, GraduationCap, Printer, Settings } from 'lucide-react';
 import { STICKER_MAP, COLLECTION_STICKERS, STICKER_CATEGORIES } from '../data/stickers';
-import { ACHIEVEMENT_DOMAINS, ACHIEVEMENT_TIERS, achievementId } from '../data/achievements';
+import { ACHIEVEMENT_DOMAINS, ACHIEVEMENT_TIERS, achievementId, DOMAIN_MAP } from '../data/achievements';
 import useStickers from '../hooks/useStickers';
+import { MISSIONS } from '../hooks/useNextMission';
 import { FullscreenButton } from '../components/FullscreenButton';
 import RankBadge from '../components/RankBadge';
 import AchievementBadge from '../components/AchievementBadge';
@@ -25,9 +26,45 @@ import HowRanksWorkModal from '../components/HowRanksWorkModal';
 const TEACHER_VIEW_KEY = 'jma_teacher_view_v1';
 
 // Detail modal for ANY sticker (round or badge).
-function StickerDetailModal({ sticker, earned, onClose }) {
+// Prerequisite tier lookup — Cadet has no prereq; Pro requires Cadet;
+// Master requires Pro. Used to gate the "how to earn" reveal on locked
+// achievement badges so we never surface a task for a tier the kid
+// hasn't unlocked yet.
+const TIER_PREREQ = { cadet: null, pro: 'cadet', master: 'pro' };
+
+function StickerDetailModal({ sticker, earned, allEarned, teacherView, onClose, onNavigate }) {
   if (!sticker) return null;
   const isEarned = !!earned;
+  const isAchievement = sticker.category === 'achievements';
+
+  // Achievement-only extras: domain metadata, kid-facing earn instruction,
+  // and the teacher-facing pedagogical description. Both are sourced from
+  // existing data (no new copy) so the source of truth stays with the
+  // MISSIONS catalog and ACHIEVEMENT_DOMAINS.
+  const mission = isAchievement ? MISSIONS[sticker.id] : null;
+  const domain = isAchievement ? DOMAIN_MAP[sticker.domain] : null;
+
+  // Gate: don't reveal an earn-instruction for a tier the kid has not
+  // unlocked yet. Cadet is always safe; Pro needs Cadet earned; Master
+  // needs Pro earned. Earned badges always reveal (that's the "you did
+  // this by…" moment).
+  let showKidEarnLine = false;
+  if (isAchievement && mission) {
+    if (isEarned) {
+      showKidEarnLine = true;
+    } else {
+      const prereqTier = TIER_PREREQ[sticker.tier];
+      if (!prereqTier) {
+        showKidEarnLine = true; // Cadet — no prereq
+      } else {
+        const prereqId = achievementId(sticker.domain, prereqTier);
+        showKidEarnLine = !!(allEarned && allEarned[prereqId]);
+      }
+    }
+  }
+
+  const accentColor = isEarned ? (sticker.color || 'var(--jma-dark)') : '#64748b';
+
   return (
     <motion.div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
@@ -38,8 +75,8 @@ function StickerDetailModal({ sticker, earned, onClose }) {
       <motion.div
         className="relative bg-white rounded-3xl border-4 max-w-sm w-full p-6 text-center shadow-2xl"
         style={{
-          borderColor: isEarned ? (sticker.color || 'var(--jma-dark)') : '#64748b',
-          boxShadow: `0 10px 0 0 ${isEarned ? (sticker.color || 'var(--jma-dark)') : '#64748b'}`,
+          borderColor: accentColor,
+          boxShadow: `0 10px 0 0 ${accentColor}`,
         }}
         initial={{ scale: 0.7, y: 40, opacity: 0 }}
         animate={{ scale: 1, y: 0, opacity: 1 }}
@@ -51,19 +88,72 @@ function StickerDetailModal({ sticker, earned, onClose }) {
           aria-label="Close">
           <X className="w-4 h-4" style={{ color: 'var(--jma-dark)' }} />
         </button>
-        {sticker.category === 'achievements' ? (
+        {isAchievement ? (
           <div className="flex justify-center"><AchievementBadge domain={sticker.domain} tier={sticker.tier} earned={isEarned} size="lg" showName={false} /></div>
         ) : (
           <img src={sticker.icon} alt={sticker.name} draggable={false}
             className="w-32 h-32 object-contain mx-auto"
             style={{ filter: isEarned ? 'none' : 'grayscale(1) opacity(0.35)' }} />
         )}
-        <h3 className="text-2xl font-black mt-2" style={{ color: isEarned ? (sticker.color || 'var(--jma-dark)') : '#64748b' }}>
+        <h3 className="text-2xl font-black mt-2" style={{ color: accentColor }}>
           {isEarned ? sticker.name : 'Locked'}
         </h3>
         <p className="text-sm mt-2 font-medium" style={{ color: 'var(--jma-dark)' }}>
           {isEarned ? `Earned on ${new Date(earned.earnedAt).toLocaleDateString()}` : sticker.hint}
         </p>
+
+        {/* Achievement-only: teacher description (always shown when
+            teacher view is on — sourced per-domain, not per-tier, so it
+            never leaks tier-specific info) OR kid-facing earn instruction
+            (gated by prerequisite tier). */}
+        {isAchievement && teacherView && domain && (
+          <div
+            data-testid="badge-teacher-desc"
+            className="mt-4 rounded-2xl border-2 p-3 text-left"
+            style={{
+              borderColor: 'var(--jma-dark)',
+              backgroundColor: '#F5F7FB',
+            }}
+          >
+            <div className="text-[10px] font-black uppercase tracking-wider opacity-70 mb-1" style={{ color: 'var(--jma-dark)' }}>
+              Skill demonstrated
+            </div>
+            <div className="text-xs md:text-sm font-medium leading-snug" style={{ color: 'var(--jma-dark)' }}>
+              {domain.teacherDescription}
+            </div>
+          </div>
+        )}
+        {isAchievement && !teacherView && showKidEarnLine && mission && (
+          <div
+            data-testid="badge-earn-line"
+            className="mt-4 rounded-2xl border-2 p-3 text-left"
+            style={{
+              borderColor: 'var(--jma-dark)',
+              backgroundColor: '#FFF8D6',
+            }}
+          >
+            <div className="text-[10px] font-black uppercase tracking-wider opacity-70 mb-1" style={{ color: 'var(--jma-dark)' }}>
+              {isEarned ? 'Earned by' : 'How to earn'}
+            </div>
+            <div className="text-xs md:text-sm font-bold leading-snug" style={{ color: 'var(--jma-dark)' }}>
+              {mission.instruction}
+            </div>
+            {!isEarned && onNavigate && (
+              <button
+                data-testid="badge-try-now"
+                onClick={() => { onNavigate(mission.route); onClose(); }}
+                className="chunky-btn mt-2 px-3 py-1.5 text-xs font-black touch-manipulation"
+                style={{
+                  backgroundColor: sticker.color || 'var(--jma-yellow, #FFCC00)',
+                  color: 'white',
+                  borderColor: 'var(--jma-dark)',
+                }}
+              >
+                Try this now →
+              </button>
+            )}
+          </div>
+        )}
       </motion.div>
     </motion.div>
   );
@@ -181,33 +271,24 @@ export default function StickerBookPage() {
       <FullscreenButton />
 
       <main className="flex-1 pt-20 pb-10 px-3 md:px-6 max-w-6xl mx-auto w-full">
-        {/* Rank badge with progress meter inside it, plus a chunky
-            arcade-style "MISSIONS?" button that pops open the comic-
-            strip explainer. Bounces gently to invite a tap. */}
+          {/* Rank badge with progress meter inside it, plus a compact
+              "How ranks work?" affordance. Passive help — not a
+              notification, so no bounce or red dot. */}
         <div className="flex justify-center items-end gap-3 mt-4 mb-6">
           <RankBadge showProgress clickable={false} />
           <button
             data-testid="open-how-ranks"
             onClick={() => setHowRanksOpen(true)}
             aria-label="How ranks work"
-            className="chunky-btn relative flex flex-col items-center justify-center px-3 py-2 md:px-4 md:py-2.5 touch-manipulation flex-shrink-0"
+            className="chunky-btn flex flex-col items-center justify-center px-3 py-2 md:px-4 md:py-2.5 touch-manipulation flex-shrink-0"
             style={{
-              backgroundColor: '#FFCC00',
+              backgroundColor: 'white',
               borderColor: 'var(--jma-dark)',
               color: 'var(--jma-dark)',
-              animation: 'missions-btn-bob 2.4s ease-in-out infinite',
-              transformOrigin: 'center',
             }}
           >
             <span className="text-[9px] md:text-[10px] font-black uppercase tracking-wider leading-none opacity-70">Ranks</span>
             <span className="text-sm md:text-base font-black font-display leading-none mt-0.5">HOW?</span>
-            <span
-              aria-hidden="true"
-              className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-[#FF3B30] border-2 flex items-center justify-center text-white text-[10px] font-black"
-              style={{ borderColor: 'var(--jma-dark)' }}
-            >
-              !
-            </span>
           </button>
         </div>
 
@@ -222,9 +303,6 @@ export default function StickerBookPage() {
               <span className="text-xs font-bold opacity-60 ml-1">({achievementCount}/{totalAchievements})</span>
             </h2>
             <div className="flex items-center gap-2">
-              <span className="hidden lg:inline text-[11px] md:text-xs font-bold opacity-70 italic" style={{ color: 'var(--jma-dark)' }}>
-                These badges unlock your rank!
-              </span>
               {/* Teacher View toggle — swaps kid blurbs for standards-aligned descriptions */}
               <button
                 data-testid="teacher-view-toggle"
@@ -374,7 +452,10 @@ export default function StickerBookPage() {
           <StickerDetailModal
             sticker={openSticker}
             earned={earned[openSticker.id]}
+            allEarned={earned}
+            teacherView={teacherView}
             onClose={() => setOpenSticker(null)}
+            onNavigate={navigate}
           />
         )}
       </AnimatePresence>

@@ -27,6 +27,8 @@ export const RANKS = [
     badgeBg: '#E8F8EE',
     icon: 'assets/characters/charlie-polliwog.png',
     blurb: 'Just hatched! Hop in and make some music.',
+    // Not celebrated — it's the starting rank; nobody "reaches" it.
+    celebrationHint: null,
     // Requirement is implicit: the starting rank
     requirement: { kind: 'start', label: 'Start your music journey' },
   },
@@ -38,6 +40,9 @@ export const RANKS = [
     badgeBg: '#E8F8EE',
     icon: 'assets/characters/finn-danger.png',
     blurb: 'Your tail is twitching with rhythm!',
+    // Polliwog → Tadpole IS the very first-badge moment — coordinated
+    // as one celebration overlay (no separate first-badge toast).
+    celebrationHint: '🎉 Your first music badge! Keep exploring different music skills to keep ranking up.',
     requirement: { kind: 'minDomainsAtTier', tier: 'cadet', count: 1, label: 'Earn 1 Cadet badge' },
   },
   {
@@ -48,6 +53,7 @@ export const RANKS = [
     badgeBg: '#E5F0FF',
     icon: 'assets/characters/dr-jellybone.png',
     blurb: 'Stew is impressed. Keep exploring different skills!',
+    celebrationHint: 'You earned Cadet badges in 3 different music skills.',
     requirement: { kind: 'minDomainsAtTier', tier: 'cadet', count: 3, label: 'Earn Cadet badges in 3 different domains' },
   },
   {
@@ -58,6 +64,7 @@ export const RANKS = [
     badgeBg: '#FFF1DC',
     icon: 'assets/characters/jazzy.png',
     blurb: 'You can really play one thing. The band is listening!',
+    celebrationHint: 'You earned your first Pro badge.',
     requirement: { kind: 'minDomainsAtTier', tier: 'pro', count: 1, label: 'Earn 1 Pro badge' },
   },
   {
@@ -68,6 +75,7 @@ export const RANKS = [
     badgeBg: '#FFE5E1',
     icon: 'assets/characters/charlie-rundmc.png',
     blurb: 'Strong in multiple skills. A real performer!',
+    celebrationHint: 'You earned Pro badges in 3 different music skills.',
     requirement: { kind: 'minDomainsAtTier', tier: 'pro', count: 3, label: 'Earn Pro badges in 3 different domains' },
   },
   {
@@ -78,6 +86,7 @@ export const RANKS = [
     badgeBg: '#F2E7FA',
     icon: 'assets/characters/charlie-drum-major.png',
     blurb: 'You set the tempo around here.',
+    celebrationHint: 'You earned your first Master badge.',
     requirement: { kind: 'minDomainsAtTier', tier: 'master', count: 1, label: 'Earn 1 Master badge' },
   },
   {
@@ -88,6 +97,7 @@ export const RANKS = [
     badgeBg: '#FFF8D6',
     icon: 'assets/characters/charlie-grad.png',
     blurb: 'Maestro! You officially run this place.',
+    celebrationHint: 'You earned Master badges in 3 different music skills.',
     requirement: { kind: 'minDomainsAtTier', tier: 'master', count: 3, label: 'Earn Master badges in 3 different domains' },
   },
 ];

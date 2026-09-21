@@ -12,7 +12,6 @@ import { RANKS } from '../data/ranks';
 
 const JMA_DARK = 'var(--jma-dark)';
 const DR_J = 'assets/characters/dr-jellybone.png';
-const DR_J_DETECTIVE = 'assets/characters/dr-jellybone-detective.png';
 const DR_J_GRAD = 'assets/characters/charlie-grad.png';
 
 // ------------------------------------------------------------------
@@ -111,34 +110,24 @@ function LadderList({ formal }) {
 // ------------------------------------------------------------------
 const KID_PANELS = [
   {
-    key: 'tiers',
+    key: 'system',
     portrait: DR_J,
-    quote: 'Every music skill has 3 badges. Earn them in order — Cadet, then Pro, then Master.',
+    quote: 'Every music skill has 3 badges — Cadet, Pro, Master. Try different music skills to level up your rank!',
     accent: '#4285F4',
-    title: 'Badges have 3 levels',
+    title: 'How badges become ranks',
     content: (
-      <TierChips
-        items={[
-          { label: 'Cadet',  color: '#CD7F32', hint: 'Getting it' },
-          { label: 'Pro',    color: '#94A3B8', hint: 'Rocking it' },
-          { label: 'Master', color: '#FFCC00', hint: 'Owning it' },
-        ]}
-      />
-    ),
-  },
-  {
-    key: 'breadth',
-    portrait: DR_J_DETECTIVE,
-    quote: 'Ranks aren\u2019t about how many stickers you have — they\u2019re about how many different music skills you\u2019ve tried.',
-    accent: '#AF52DE',
-    title: 'Try lots of stuff!',
-    content: (
-      <div className="rounded-2xl border-[3px] p-3 bg-[#FFF8D6]" style={{ borderColor: JMA_DARK }}>
-        <div className="text-xs md:text-sm font-black font-display mb-1" style={{ color: JMA_DARK }}>
-          Different games = faster rank-ups.
-        </div>
-        <div className="text-[11px] md:text-xs" style={{ color: JMA_DARK }}>
-          Rhythm, ears, keyboard, beats, songs — mix it up!
+      <div className="space-y-3">
+        <TierChips
+          items={[
+            { label: 'Cadet',  color: '#CD7F32', hint: 'Getting it' },
+            { label: 'Pro',    color: '#94A3B8', hint: 'Rocking it' },
+            { label: 'Master', color: '#FFCC00', hint: 'Owning it' },
+          ]}
+        />
+        <div className="rounded-2xl border-[3px] p-2.5 bg-[#FFF8D6]" style={{ borderColor: JMA_DARK }}>
+          <div className="text-[11px] md:text-xs font-bold" style={{ color: JMA_DARK }}>
+            Different music skills = faster rank-ups.
+          </div>
         </div>
       </div>
     ),
@@ -155,36 +144,28 @@ const KID_PANELS = [
 
 const TEACHER_PANELS = [
   {
-    key: 'tiers',
+    key: 'system',
     portrait: DR_J,
-    quote: 'Each music domain has three enamel tiers: Cadet, Pro, and Master.',
+    quote: 'Each domain has three enamel tiers (Cadet, Pro, Master); ranks reflect breadth of skill across domains.',
     accent: '#4285F4',
-    title: 'Skill Badges: Cadet · Pro · Master',
+    title: 'How badges become ranks',
     content: (
-      <TierChips
-        items={[
-          { label: 'Cadet',  color: '#CD7F32', hint: 'Emerging' },
-          { label: 'Pro',    color: '#94A3B8', hint: 'Consistent' },
-          { label: 'Master', color: '#FFCC00', hint: 'Fluent' },
-        ]}
-      />
-    ),
-  },
-  {
-    key: 'breadth',
-    portrait: DR_J_DETECTIVE,
-    quote: 'Ranks reflect breadth of skill across domains — not sticker volume.',
-    accent: '#AF52DE',
-    title: 'Ranks reward breadth',
-    content: (
-      <div className="rounded-2xl border-[3px] p-3 bg-[#FFF8D6]" style={{ borderColor: JMA_DARK }}>
-        <div className="text-xs md:text-sm font-black font-display mb-1" style={{ color: JMA_DARK }}>
-          Example threshold — Performer:
+      <div className="space-y-3">
+        <TierChips
+          items={[
+            { label: 'Cadet',  color: '#CD7F32', hint: 'Emerging' },
+            { label: 'Pro',    color: '#94A3B8', hint: 'Consistent' },
+            { label: 'Master', color: '#FFCC00', hint: 'Fluent' },
+          ]}
+        />
+        <div className="rounded-2xl border-[3px] p-2.5 bg-[#FFF8D6]" style={{ borderColor: JMA_DARK }}>
+          <div className="text-[11px] md:text-xs font-black font-display mb-0.5" style={{ color: JMA_DARK }}>
+            Example threshold — Performer:
+          </div>
+          <div className="text-[11px] md:text-xs" style={{ color: JMA_DARK }}>
+            Pro badge in <b>3 distinct</b> domains, with Cadet prerequisite satisfied in each.
+          </div>
         </div>
-        <ul className="text-[11px] md:text-xs space-y-0.5 list-disc pl-5" style={{ color: JMA_DARK }}>
-          <li>Pro badge in <b>3 distinct</b> domains</li>
-          <li>Cadet prerequisite satisfied in each</li>
-        </ul>
       </div>
     ),
   },

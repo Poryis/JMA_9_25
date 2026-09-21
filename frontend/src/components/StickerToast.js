@@ -14,29 +14,66 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
 import useStickers from '../hooks/useStickers';
+import useRank from '../hooks/useRank';
 import { STICKER_MAP } from '../data/stickers';
+import { ALL_ACHIEVEMENT_IDS } from '../data/achievements';
 
 const MAX_ICONS_IN_BATCH = 4;
 
 export default function StickerToast() {
   const { toast, dismissToast } = useStickers();
+  const { currentRank, nextRank, progress } = useRank();
   const navigate = useNavigate();
+
+  // Track rank-id across renders so we can detect the exact frame in which
+  // an earn caused a rank crossing. On that frame the RankUpCelebration
+  // owns the visual moment — the toast is suppressed to prevent competing
+  // overlays. useRef init to null means we NEVER report a change on mount.
+  const prevRankIdRef = useRef(null);
+  const rankJustChanged =
+    prevRankIdRef.current !== null && prevRankIdRef.current !== currentRank.id;
+  useEffect(() => {
+    prevRankIdRef.current = currentRank.id;
+  }, [currentRank.id]);
 
   const ids = toast?.ids || [];
   const primary = toast?.primary;
   const isBatch = ids.length > 1;
   const accent = primary?.color || '#FFCC00';
+
+  // Is the primary sticker in this toast an achievement badge (rank-driving)?
+  // Only achievements get rank-progress copy; collection stickers stay flair.
+  const isAchievement = !!primary && ALL_ACHIEVEMENT_IDS.includes(primary.id);
+
+  // Dynamic progress line — only computed for single-achievement toasts
+  // where the rank did NOT just change. Everything is sourced from live
+  // rank state so the copy is literally true at this moment.
+  let progressLine = null;
+  if (isAchievement && !isBatch && !rankJustChanged) {
+    if (!nextRank) {
+      progressLine = 'You reached Maestro!';
+    } else {
+      const remaining = Math.max(0, progress.target - progress.current);
+      if (remaining > 0) {
+        progressLine = `${progress.current} of ${progress.target} toward ${nextRank.title}`;
+      }
+    }
+  }
+
+  // Coordination gate: if this earn also triggered a rank-up, the toast
+  // yields the moment entirely to RankUpCelebration.
+  const suppressForRankUp = isAchievement && rankJustChanged;
+
   const handleTap = () => {
     dismissToast();
-    // Tapping the toast opens the Sticker Book so the kid can savour the
-    // new collection — same affordance for single + batch earns.
     navigate('/sticker-book');
   };
 
   return (
     <AnimatePresence>
-      {toast && (
+      {toast && !suppressForRankUp && (
         <motion.div
           key={ids.join('-')}
           data-testid="sticker-toast"
@@ -117,11 +154,20 @@ export default function StickerToast() {
             </motion.div>
             <div className="flex flex-col min-w-0">
               <span className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1" style={{ color: accent }}>
-                <Sparkles className="inline w-3 h-3" /> New Sticker!
+                <Sparkles className="inline w-3 h-3" /> {isAchievement ? 'New Badge!' : 'New Sticker!'}
               </span>
               <span className="text-sm font-black leading-tight font-display truncate" style={{ color: 'var(--jma-dark)' }}>
                 {primary.name}
               </span>
+              {progressLine && (
+                <span
+                  data-testid="sticker-toast-progress"
+                  className="text-[10px] font-bold opacity-70 truncate"
+                  style={{ color: 'var(--jma-dark)' }}
+                >
+                  {progressLine}
+                </span>
+              )}
             </div>
           </>
         )}

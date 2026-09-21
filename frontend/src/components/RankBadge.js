@@ -67,7 +67,7 @@ export default function RankBadge({ compact = false, showProgress = false, click
         {!compact && (
           <span className="text-[10px] md:text-xs font-bold text-gray-500 truncate">
             {nextRank
-              ? `Next: ${nextRank.requirement.label}`
+              ? `Next rank: ${nextRank.requirement.label}`
               : `🏆 Maestro! ${achievementCount} badges earned`}
           </span>
         )}

@@ -28,7 +28,9 @@ import useStickers from './useStickers';
 // Achievement ID → mission UX metadata.
 // `route` is the HashRouter target. `cta` is the button verb (short).
 // `instruction` is the one-line "what to do" the kid sees on the card.
-const MISSIONS = {
+// Exported so StickerDetailModal can surface the earn-instruction on a
+// per-badge basis (§5 progression cleanup) without duplicating the catalog.
+export const MISSIONS = {
   ach_rhythm_cadet:    { route: '/rhythm-game',  cta: 'Play Jelly Jukebox', instruction: 'Hit 20 perfect notes in any song' },
   ach_rhythm_pro:      { route: '/rhythm-game',  cta: 'Chase a streak',     instruction: 'Hit a streak of 15 in any song' },
   ach_rhythm_master:   { route: '/rhythm-game',  cta: 'Try Turbo speed!',   instruction: 'Finish a song at Turbo speed' },
@@ -149,5 +151,6 @@ export default function useNextMission() {
   }, [earnedSet]);
 }
 
-// Exported for tests/sticker book.
-export { MISSIONS, getMissionForAchievement, pickAchievementId };
+// Exported for tests/sticker book. MISSIONS is already exported inline
+// via `export const MISSIONS` at the top of the file.
+export { getMissionForAchievement, pickAchievementId };

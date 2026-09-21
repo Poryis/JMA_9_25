@@ -60,12 +60,33 @@ export default function RankUpCelebration() {
             >
               <img src={rankUp.icon} alt={rankUp.title} className="w-full h-full object-contain" />
             </motion.div>
-            <p
-              className="text-base font-bold mb-4 leading-snug"
+            <motion.p
+              className="text-base font-bold mb-3 leading-snug"
               style={{ color: 'var(--jma-dark)' }}
             >
               {rankUp.blurb}
-            </p>
+            </motion.p>
+            {/* Dynamic context line — sourced from ranks.js so the copy
+                is always accurate to the specific rank threshold the kid
+                just crossed. On the first-ever badge (Polliwog → Tadpole)
+                this becomes the coordinated "your first music badge"
+                moment — no competing overlays. */}
+            {rankUp.celebrationHint && (
+              <motion.p
+                data-testid="rank-up-hint"
+                className="text-sm font-bold mb-4 leading-snug px-2 py-2 rounded-xl"
+                style={{
+                  color: 'var(--jma-dark)',
+                  backgroundColor: `${rankUp.color}22`,
+                  border: `2px solid ${rankUp.color}55`,
+                }}
+                initial={{ y: 8, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.55 }}
+              >
+                {rankUp.celebrationHint}
+              </motion.p>
+            )}
             <button
               data-testid="rank-up-dismiss"
               onClick={dismissRankUp}
