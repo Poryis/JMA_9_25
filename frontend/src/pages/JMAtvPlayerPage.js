@@ -10,9 +10,9 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Player from '@vimeo/player';
-import { Maximize2, ChevronRight } from 'lucide-react';
+import { Maximize2, ChevronRight, Volume2 } from 'lucide-react';
 import { GameHeader } from '../components/GameUI';
 import SpaceBackdrop, { SPACE_BG_STYLE } from '../components/SpaceBackdrop';
 import { getChannel, getEpisode } from '../data/jmatv';
@@ -27,6 +27,12 @@ export default function JMAtvPlayerPage() {
   const iframeRef = useRef(null);
   const playerRef = useRef(null);
   const [loadError, setLoadError] = useState(false);
+  // iOS Safari blocks audible autoplay without a user gesture, so we
+  // start every episode muted (autoplay=1 + muted=1 works everywhere)
+  // and surface a tap-to-unmute overlay when we detect the player is
+  // actually muted after mount. One tap flips the mute + kicks play,
+  // which counts as the user gesture iOS wants.
+  const [needsUnmute, setNeedsUnmute] = useState(false);
 
   // Sticker hook — kid watches their first JMAtv episode, drop the sticker
   // (defined in data/stickers.js). Falls through silently if the sticker ID
@@ -50,8 +56,31 @@ export default function JMAtvPlayerPage() {
     let player;
     try { player = new Player(el); } catch { return; }
     playerRef.current = player;
-    try { player.ready().catch(() => setLoadError(true)); } catch { /* ignore */ }
+    try {
+      player.ready()
+        .then(async () => {
+          // Ask the player whether it's currently muted (iOS Safari
+          // almost always is on autoplay). If so, show the overlay.
+          try {
+            const muted = await player.getMuted();
+            setNeedsUnmute(!!muted);
+          } catch { /* no-op */ }
+        })
+        .catch(() => setLoadError(true));
+    } catch { /* ignore */ }
   }, [destroyPlayer]);
+
+  const handleUnmute = useCallback(async () => {
+    const player = playerRef.current;
+    setNeedsUnmute(false);
+    if (!player) return;
+    try {
+      await player.setMuted(false);
+      // Some browsers pause on setMuted — kick it back into gear.
+      await player.setVolume(1);
+      await player.play();
+    } catch { /* no-op */ }
+  }, []);
 
   useEffect(() => () => destroyPlayer(), [destroyPlayer]);
 
@@ -91,7 +120,7 @@ export default function JMAtvPlayerPage() {
     );
   }
 
-  const iframeSrc = `https://player.vimeo.com/video/${episode.vimeoId}?app_id=122963&autoplay=1&title=0&byline=0&portrait=0&dnt=1`;
+  const iframeSrc = `https://player.vimeo.com/video/${episode.vimeoId}?app_id=122963&autoplay=1&muted=1&title=0&byline=0&portrait=0&dnt=1`;
   const otherEpisodes = channel.episodes
     .map((ep, idx) => ({ ...ep, index: idx }))
     .filter((ep) => ep.index !== episode.index);
@@ -190,6 +219,57 @@ export default function JMAtvPlayerPage() {
                 mixBlendMode: 'multiply',
               }}
             />
+
+            {/* Tap-to-unmute overlay — iOS Safari (and desktop Safari
+                on strict autoplay policies) mutes autoplayed video by
+                default. We start muted so the video actually plays,
+                then invite the kid to tap once for sound. */}
+            <AnimatePresence>
+              {needsUnmute && !loadError && (
+                <motion.button
+                  key="unmute-overlay"
+                  data-testid="jmatv-player-unmute"
+                  type="button"
+                  onClick={handleUnmute}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer"
+                  style={{
+                    background:
+                      'radial-gradient(ellipse at center, rgba(10,37,64,0.55) 0%, rgba(10,37,64,0.85) 100%)',
+                    color: 'white',
+                    zIndex: 6,
+                    border: 0,
+                  }}
+                  aria-label="Tap to unmute video"
+                >
+                  <motion.div
+                    initial={{ scale: 0.85, y: 8 }}
+                    animate={{ scale: 1, y: 0 }}
+                    transition={{ type: 'spring', stiffness: 240, damping: 18 }}
+                    className="flex flex-col items-center gap-2 md:gap-3"
+                  >
+                    <div
+                      className="w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center border-4"
+                      style={{
+                        backgroundColor: '#FFCC00',
+                        borderColor: 'white',
+                        boxShadow: '0 6px 0 0 rgba(0,0,0,0.5), 0 0 24px rgba(255,204,0,0.55)',
+                      }}
+                    >
+                      <Volume2 className="w-8 h-8 md:w-10 md:h-10" style={{ color: 'var(--jma-dark)' }} />
+                    </div>
+                    <div
+                      className="text-base md:text-xl font-black font-display uppercase tracking-wider"
+                      style={{ textShadow: '2px 2px 0 rgba(0,0,0,0.6)' }}
+                    >
+                      Tap for sound
+                    </div>
+                  </motion.div>
+                </motion.button>
+              )}
+            </AnimatePresence>
 
             {loadError && (
               <div

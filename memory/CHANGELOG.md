@@ -1,5 +1,44 @@
 # Changelog
 
+## Beta punch-list batch — Sneaky Note card, Stew Kazoo route, Robot Boogie title, landscape crops, iPad unmute (Feb 2026)
+
+**User request**: The transparent styling on Sneaky Note wasn't reading; Stew Kazoo win takes kids all the way back to home; Robot Boogie chrome title doesn't match the arcade marquees. Plus batch: Beat Lab landscape back-button overlap, Robot Boogie landscape character crop, JMAtv iPad tap-to-unmute.
+
+### Sneaky Note "Case File" — `pages/DetectivePage.js`
+- Rebuilt the Bonus Mode `restquiz` card as a dark-navy dossier: `linear-gradient(#0A2540 → #142F55 → #1B3A6A)` background w/ `3px dashed #AF52DE` border, purple drop-shadow (`0 6px 0 #AF52DE`).
+- Added a rotated purple "tape" strip at top-left, a red rotated `CASE FILE` rubber stamp at top-right, and swapped the flat white magnifier badge for a purple radial-gradient badge w/ white icon and cyan glow.
+- Title now white w/ purple + navy text-shadow, description in soft-purple `#E4CDF7`, Best score in yellow `#FFCC00`.
+
+### Stew Kazoo win route — `pages/SimonSaysPage.js`
+- After beating level 8, `navigate('/')` → `navigate('/simon-says')` so kids land back on Stew's own difficulty select instead of the app home.
+
+### Robot Boogie arcade title — `pages/RobotBoogiePage.js`
+- Dropped `import RobotBoogieTitle` and swapped `title={<RobotBoogieTitle />}` for `title="ROBOT BOOGIE"`. `GameHeader` renders strings through its standard `MarqueeTitle` (yellow-plate arcade pill), so RB now matches every other game.
+
+### Robot Boogie landscape character crop — `pages/RobotBoogiePage.js`
+- Active-band `minHeight: '180px'` + `maxHeight: 'calc(100vh - 340px)'` was clipping feet on 812×375 landscape phones (maxHeight went ~35px).
+- Now `minHeight: 'clamp(150px, 30vh, 220px)'` + `maxHeight: 'clamp(200px, calc(100vh - 260px), 640px)'`.
+
+### Beat Lab landscape back-button overlap — `pages/LoopStudioPage.js`
+- `<main>` padding bumped `pt-20 md:pt-24 lg:pt-28` → `pt-24 md:pt-28 lg:pt-28`.
+- Added `marginLeft: 'max(0px, env(safe-area-inset-left))'` on the deck so it never slides under the fixed back-pill on narrow landscape viewports.
+
+### JMAtv iPad tap-to-unmute — `pages/JMAtvPlayerPage.js`
+- Iframe src now `autoplay=1&muted=1` so iOS Safari actually plays.
+- On `player.ready()`, calls `player.getMuted()`; if true, sets state `needsUnmute=true`.
+- Renders an `AnimatePresence` overlay (radial navy backdrop + yellow speaker badge + "TAP FOR SOUND" copy, `data-testid="jmatv-player-unmute"`) inside the CRT screen at `zIndex: 6`.
+- Tap calls `setMuted(false) → setVolume(1) → play()` and dismisses the overlay.
+
+### QA
+- Smoke screenshots (1400×900 + 812×375):
+  - Detective menu → Sneaky Note card renders as navy case-file, no more transparent misfire.
+  - Robot Boogie → yellow arcade "ROBOT BOOGIE" marquee identical to other games.
+  - Robot Boogie 812×375 → characters visible in lineup, active-band ready to hold zapped-in dancers without clipping.
+  - Beat Lab 812×375 → back-pill on far left, PLAY / deck controls clear; no overlap.
+- JMAtv unmute overlay is code-verified; iOS-specific muted-autoplay behavior needs a real device to confirm the overlay appears.
+
+
+
 ## Sub-menu branding + card polish (Feb 2026)
 
 **User request**: On PLAY / LEARN / CREATE pages, replace the giant word title with the Shield flanked by Finn and Charlie (like the home page). Keep the subtitle pill ("Pick your jam", etc.). On all cards with a hero, the title must be a single centered line at the top and the hero must be MUCH bigger without cropping or overlapping the text. Applies to every card except Charlie's Song Studio (no hero).

@@ -255,7 +255,10 @@ function SimonSaysPage({ score, setScore, gameStats, setGameStats, resetGame }) 
             celebrate(true);
             setMessage('YOU BEAT THE WHOLE GAME!');
             setGameState('finished');
-            timeoutRef.current = setTimeout(() => navigate('/'), 3200);
+            // Beta feedback: kids expect to bounce back to Stew's own
+            // difficulty menu after crushing the whole game, not all the
+            // way out to the app home. Loops them tighter into replay.
+            timeoutRef.current = setTimeout(() => navigate('/simon-says'), 3200);
           } else {
             // Mega celebration on milestone level 5; regular on every other.
             celebrate(level === 5);

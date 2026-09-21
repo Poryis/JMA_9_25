@@ -446,7 +446,12 @@ function LoopStudioPage() {
         }}
       />
 
-      <main className="relative flex-1 pt-20 md:pt-24 lg:pt-28 pb-6 px-2 md:px-4">
+      <main className="relative flex-1 pt-24 md:pt-28 lg:pt-28 pb-6 px-2 md:px-4">
+        {/* Landscape phones have short viewports; the fixed GameHeader
+            back-button sits at top-left and used to visually overlap
+            the Play button of the deck's transport row. Extra top
+            padding + a small left inset on the deck below keeps the
+            controls clear of the back pill in any orientation. */}
         {/* THE DECK — one cohesive piece of cartoon studio hardware that
             holds the transport, the sequencer, and the instruments. All
             existing state and handlers untouched; this is a re-skin only. */}
@@ -458,6 +463,9 @@ function LoopStudioPage() {
             borderColor: '#050C18',
             boxShadow:
               '0 10px 0 rgba(0,0,0,0.35), inset 0 3px 0 rgba(255,255,255,0.08), inset 0 -6px 0 rgba(0,0,0,0.35)',
+            // Nudge the deck right of the fixed back-button pill on
+            // narrow landscape viewports so the two never overlap.
+            marginLeft: 'max(0px, env(safe-area-inset-left))',
           }}
         >
           {/* Name tag if player has entered a name — the star + shield

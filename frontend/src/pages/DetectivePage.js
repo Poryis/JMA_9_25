@@ -518,7 +518,10 @@ export default function DetectivePage() {
           {/* --- BONUS MODE section — Sneaky Note is a different game
                mechanic (find the ADDED note in a rest), not a harder
                difficulty. Separate visual treatment so kids don't
-               confuse it for "extra-hard mode." ------------------- */}
+               confuse it for "extra-hard mode." Redesigned as a
+               "case file" — dark navy paper w/ purple accent tape,
+               dashed border, and CASE FILE stamp — to visually
+               distance it from the flat difficulty cards above. ---- */}
           {LEVELS.restquiz && (() => {
             const lvl = LEVELS.restquiz;
             const best = bestRecords.restquiz;
@@ -537,12 +540,14 @@ export default function DetectivePage() {
                 </div>
                 <motion.button
                   data-testid="detective-difficulty-restquiz"
-                  className={`level-card p-4 text-left flex items-center gap-3 ${difficulty === 'restquiz' ? 'ring-4 ring-[var(--jma-purple)]' : ''}`}
+                  className={`relative overflow-hidden p-4 pl-5 text-left flex items-center gap-3 rounded-2xl cursor-pointer ${difficulty === 'restquiz' ? 'ring-4 ring-[var(--jma-purple)]' : ''}`}
                   style={{
-                    background: `linear-gradient(135deg, ${accent}18 0%, ${accent}33 100%)`,
-                    borderColor: accent,
-                    borderWidth: 4,
-                    boxShadow: `0 6px 0 0 ${accent}`,
+                    // Dark navy "case file" paper w/ subtle purple tint
+                    background:
+                      'linear-gradient(135deg, #0A2540 0%, #142F55 55%, #1B3A6A 100%)',
+                    border: `3px dashed ${accent}`,
+                    boxShadow: `0 6px 0 0 ${accent}, inset 0 2px 0 rgba(255,255,255,0.08)`,
+                    color: 'white',
                   }}
                   onClick={() => startGame('restquiz')}
                   initial={{ y: 16, opacity: 0 }}
@@ -551,24 +556,69 @@ export default function DetectivePage() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
+                  {/* Purple "tape" strip on top-left corner — reinforces
+                      the case-file dossier vibe. */}
                   <div
-                    className="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center border-2"
-                    style={{ backgroundColor: 'white', borderColor: accent }}
+                    aria-hidden="true"
+                    className="absolute pointer-events-none"
+                    style={{
+                      top: -6, left: -10,
+                      width: 68, height: 18,
+                      transform: 'rotate(-14deg)',
+                      background: `${accent}CC`,
+                      border: '1.5px solid rgba(0,0,0,0.35)',
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.35)',
+                    }}
+                  />
+                  {/* "CASE FILE" stamp — small, red-ish, rotated for that
+                      rubber-stamped feel. */}
+                  <div
+                    aria-hidden="true"
+                    className="absolute pointer-events-none text-[9px] font-black uppercase tracking-widest"
+                    style={{
+                      top: 8, right: 10,
+                      color: '#FF6B6B',
+                      border: '1.5px solid #FF6B6B',
+                      padding: '1px 5px',
+                      borderRadius: 3,
+                      transform: 'rotate(6deg)',
+                      opacity: 0.85,
+                      letterSpacing: '0.12em',
+                    }}
                   >
-                    <Search className="w-6 h-6" style={{ color: accent }} />
+                    Case&nbsp;File
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-black font-display" style={{ color: 'var(--jma-dark)' }}>
+                  <div
+                    className="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center border-2 relative z-[1]"
+                    style={{
+                      background: `radial-gradient(circle at 30% 30%, ${accent} 0%, #6E2FA8 90%)`,
+                      borderColor: 'white',
+                      boxShadow: `0 0 12px ${accent}88, inset 0 2px 0 rgba(255,255,255,0.3)`,
+                    }}
+                  >
+                    <Search className="w-6 h-6" style={{ color: 'white' }} />
+                  </div>
+                  <div className="flex-1 min-w-0 relative z-[1]">
+                    <h3
+                      className="text-lg font-black font-display leading-tight"
+                      style={{
+                        color: 'white',
+                        textShadow: `1px 1px 0 ${accent}, 2px 2px 0 rgba(0,0,0,0.5)`,
+                      }}
+                    >
                       {lvl.name}
                     </h3>
-                    <p className="text-xs font-bold" style={{ color: 'var(--jma-dark)' }}>
+                    <p
+                      className="text-xs font-bold"
+                      style={{ color: '#E4CDF7' }}
+                    >
                       {lvl.description}
                     </p>
                   </div>
                   {best && best.score > 0 && (
-                    <div className="text-right flex-shrink-0">
-                      <div className="text-[10px] uppercase font-bold opacity-60">Best</div>
-                      <div className="text-sm font-black" style={{ color: 'var(--jma-orange)' }}>
+                    <div className="text-right flex-shrink-0 relative z-[1]">
+                      <div className="text-[10px] uppercase font-bold" style={{ color: '#E4CDF7', opacity: 0.85 }}>Best</div>
+                      <div className="text-sm font-black" style={{ color: '#FFCC00' }}>
                         {best.score} pts
                       </div>
                     </div>

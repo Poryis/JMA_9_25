@@ -28,7 +28,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence, useAnimationControls } from 'framer-motion';
 import { RotateCcw } from 'lucide-react';
 import { GameHeader } from '../components/GameUI';
-import RobotBoogieTitle from '../components/RobotBoogieTitle';
+
 import useRobotBoogieAudio from '../hooks/useRobotBoogieAudio';
 import useBeatPulse from '../hooks/useBeatPulse';
 import LightningStage from '../components/LightningStage';
@@ -1176,7 +1176,7 @@ export default function RobotBoogiePage() {
         }}
       />
 
-      <GameHeader title={<RobotBoogieTitle />} showHomeButton={true} />
+      <GameHeader title="ROBOT BOOGIE" showHomeButton={true} />
 
       {/* Reset chip + speed slider row. Positioned below the fixed
           GameHeader — pt-20 on mobile (the "Back" button pill is ~76px
@@ -1262,8 +1262,15 @@ export default function RobotBoogiePage() {
           data-testid="robot-boogie-active-band"
           className="w-full flex-1 flex flex-wrap items-end justify-center content-center gap-0 pt-2 pb-0"
           style={{
-            minHeight: '180px',
-            maxHeight: 'calc(100vh - 340px)',
+            // Short landscape viewports (e.g. phones rotated sideways
+            // ~360px tall) were clipping character feet because the
+            // static 340px reservation left almost no room. Clamp so
+            // the band always keeps at least ~160px, tops out at
+            // ~640px, and gracefully shrinks in between. minHeight
+            // guarantees at least one full character even when
+            // 100vh - 260 goes negative in landscape.
+            minHeight: 'clamp(150px, 30vh, 220px)',
+            maxHeight: 'clamp(200px, calc(100vh - 260px), 640px)',
             overflow: 'visible',
           }}
         >
