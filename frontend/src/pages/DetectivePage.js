@@ -484,7 +484,8 @@ export default function DetectivePage() {
         </motion.div>
 
         <div className="grid gap-2 w-full max-w-md">
-          {Object.entries(LEVELS).map(([key, lvl], idx) => {
+          {/* Main difficulty picks — standard Easy / Medium / Hard */}
+          {Object.entries(LEVELS).filter(([k]) => k !== 'restquiz').map(([key, lvl], idx) => {
             const best = bestRecords[key];
             return (
               <motion.button
@@ -513,6 +514,69 @@ export default function DetectivePage() {
               </motion.button>
             );
           })}
+
+          {/* --- BONUS MODE section — Sneaky Note is a different game
+               mechanic (find the ADDED note in a rest), not a harder
+               difficulty. Separate visual treatment so kids don't
+               confuse it for "extra-hard mode." ------------------- */}
+          {LEVELS.restquiz && (() => {
+            const lvl = LEVELS.restquiz;
+            const best = bestRecords.restquiz;
+            const accent = '#AF52DE';
+            return (
+              <>
+                <div className="flex items-center gap-2 mt-2 mb-1">
+                  <div className="flex-1 h-[2px] rounded-full" style={{ background: 'rgba(10,37,64,0.15)' }} />
+                  <div
+                    className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full"
+                    style={{ backgroundColor: accent, color: 'white', border: '2px solid var(--jma-dark)' }}
+                  >
+                    Bonus Mode
+                  </div>
+                  <div className="flex-1 h-[2px] rounded-full" style={{ background: 'rgba(10,37,64,0.15)' }} />
+                </div>
+                <motion.button
+                  data-testid="detective-difficulty-restquiz"
+                  className={`level-card p-4 text-left flex items-center gap-3 ${difficulty === 'restquiz' ? 'ring-4 ring-[var(--jma-purple)]' : ''}`}
+                  style={{
+                    background: `linear-gradient(135deg, ${accent}18 0%, ${accent}33 100%)`,
+                    borderColor: accent,
+                    borderWidth: 4,
+                    boxShadow: `0 6px 0 0 ${accent}`,
+                  }}
+                  onClick={() => startGame('restquiz')}
+                  initial={{ y: 16, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.32 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <div
+                    className="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center border-2"
+                    style={{ backgroundColor: 'white', borderColor: accent }}
+                  >
+                    <Search className="w-6 h-6" style={{ color: accent }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-black font-display" style={{ color: 'var(--jma-dark)' }}>
+                      {lvl.name}
+                    </h3>
+                    <p className="text-xs font-bold" style={{ color: 'var(--jma-dark)' }}>
+                      {lvl.description}
+                    </p>
+                  </div>
+                  {best && best.score > 0 && (
+                    <div className="text-right flex-shrink-0">
+                      <div className="text-[10px] uppercase font-bold opacity-60">Best</div>
+                      <div className="text-sm font-black" style={{ color: 'var(--jma-orange)' }}>
+                        {best.score} pts
+                      </div>
+                    </div>
+                  )}
+                </motion.button>
+              </>
+            );
+          })()}
         </div>
       </div>
     );

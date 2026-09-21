@@ -30,11 +30,21 @@ const STEW_FRAMES = [
   'assets/stew/stew-plays-3.png',
 ];
 
+// Difficulty tiers — each sets the STARTING level so kids who want a
+// challenge can skip ahead. All tiers still progress toward the 10-note
+// finale, they just start at different rungs of the ladder.
+const LEVELS = {
+  easy:   { name: 'Easy',   startLevel: 1, description: '3-note start' },
+  medium: { name: 'Medium', startLevel: 3, description: '5-note start' },
+  hard:   { name: 'Hard',   startLevel: 5, description: '7-note start' },
+};
+
 function SimonSaysPage({ score, setScore, gameStats, setGameStats, resetGame }) {
   const navigate = useNavigate();
   const { playKazooNote, playFeedbackSound, initAudioContext } = useAudio();
 
   const [gameState, setGameState] = useState('ready');
+  const [difficulty, setDifficulty] = useState('easy');
   const [level, setLevel] = useState(1);
   const [showingIndex, setShowingIndex] = useState(-1);
   const [playerIndex, setPlayerIndex] = useState(0);
@@ -150,7 +160,7 @@ function SimonSaysPage({ score, setScore, gameStats, setGameStats, resetGame }) 
   // We AWAIT the audio context resume before transitioning to 'showing' so
   // Stew's first demo note doesn't fire alongside any queued/late sources
   // (the cause of the "first note plays a bunch at once" bug on iOS).
-  const startGame = useCallback(async () => {
+  const startGame = useCallback(async (diffKey) => {
     const ctx = initAudioContext();
     if (ctx && ctx.state === 'suspended') {
       try { await ctx.resume(); } catch (_) {}
@@ -158,11 +168,13 @@ function SimonSaysPage({ score, setScore, gameStats, setGameStats, resetGame }) 
     // Small extra tick to let the audio graph settle on slower devices.
     await new Promise((r) => setTimeout(r, 60));
     resetGame();
-    setLevel(1);
+    const chosen = typeof diffKey === 'string' && LEVELS[diffKey] ? diffKey : difficulty;
+    setDifficulty(chosen);
+    setLevel(LEVELS[chosen].startLevel);
     setGameState('showing');
     setMessage('Watch and listen!');
     setShowingIndex(0);
-  }, [initAudioContext, resetGame]);
+  }, [initAudioContext, resetGame, difficulty]);
 
   // Show pattern to player
   useEffect(() => {
@@ -310,7 +322,12 @@ function SimonSaysPage({ score, setScore, gameStats, setGameStats, resetGame }) 
 
         <motion.h1
           className="text-3xl md:text-5xl font-black mb-4 text-center uppercase"
-          style={{ color: 'var(--jma-dark)', fontFamily: "'Fredoka', cursive" }}
+          style={{
+            color: 'var(--jma-dark)',
+            fontFamily: "'Fredoka', cursive",
+            WebkitTextStroke: 0,
+            textShadow: '2px 2px 0 rgba(0,0,0,0.18)',
+          }}
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
         >
@@ -337,7 +354,7 @@ function SimonSaysPage({ score, setScore, gameStats, setGameStats, resetGame }) 
         <motion.button
           data-testid="start-simon-button"
           className="chunky-btn bg-[var(--jma-blue)] text-white px-8 py-4 flex items-center gap-3"
-          onClick={startGame}
+          onClick={() => startGame(difficulty)}
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.4, type: 'spring' }}
@@ -347,6 +364,33 @@ function SimonSaysPage({ score, setScore, gameStats, setGameStats, resetGame }) 
           <Play className="w-6 h-6" />
           <span className="text-xl font-bold">START!</span>
         </motion.button>
+
+        {/* Difficulty picker — standardized Easy / Medium / Hard tiles
+            matching every other game in the app. Sets the starting
+            pattern length so kids can jump ahead if they want a challenge. */}
+        <div className="mt-6 flex flex-col items-center gap-2 w-full max-w-md">
+          <div className="text-[10px] font-black uppercase tracking-wider opacity-60" style={{ color: 'var(--jma-dark)' }}>
+            Difficulty
+          </div>
+          <div className="grid grid-cols-3 gap-2 w-full">
+            {Object.entries(LEVELS).map(([key, lvl]) => (
+              <button
+                key={key}
+                data-testid={`simon-difficulty-${key}`}
+                onClick={() => setDifficulty(key)}
+                className="chunky-btn px-3 py-2 flex flex-col items-center touch-manipulation"
+                style={{
+                  backgroundColor: difficulty === key ? 'var(--jma-yellow, #FFCC00)' : 'white',
+                  color: 'var(--jma-dark)',
+                  borderColor: 'var(--jma-dark)',
+                }}
+              >
+                <span className="text-sm font-black">{lvl.name}</span>
+                <span className="text-[10px] font-bold opacity-70">{lvl.description}</span>
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Stew on the menu - waving */}
         <motion.img
