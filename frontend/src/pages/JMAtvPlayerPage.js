@@ -135,6 +135,28 @@ export default function JMAtvPlayerPage() {
 
       <GameHeader showHomeButton={true} backTo={`/jmatv/${channel.id}`} />
 
+      {/* Mobile-only JMAtv brand header — on narrow (phone-portrait)
+          viewports there isn't room for the in-CRT channel bug to breathe
+          against the small screen, so we lift the logo OUT of the TV and
+          stack it above everything as a proper page header. Desktop /
+          tablet keeps the in-screen bug (hidden below via `hidden md:block`
+          on the img inside the CRT) because the CRT is big enough there. */}
+      <motion.div
+        className="md:hidden relative z-10 flex justify-center mb-3"
+        initial={{ y: -12, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+      >
+        <img
+          src="assets/ui/jmatv-logo-v2.png"
+          alt="JMAtv"
+          draggable={false}
+          className="pointer-events-none"
+          style={{
+            width: 'clamp(120px, 42vw, 200px)',
+            filter: 'drop-shadow(0 3px 0 rgba(0,0,0,0.55)) drop-shadow(0 0 12px rgba(255,204,0,0.35))',
+          }}
+        />
+      </motion.div>
+
       {/* Episode title */}
       <motion.div
         className="relative z-10 w-full max-w-4xl text-center mb-3"
@@ -193,13 +215,16 @@ export default function JMAtvPlayerPage() {
               style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
             />
 
-            {/* JMAtv channel bug top-right of screen */}
+            {/* JMAtv channel bug top-right of screen — desktop / tablet only.
+                On phones the logo is lifted above the CRT via the header
+                block up top so the tiny in-screen bug doesn't crowd an
+                already-small display. */}
             <img
               src="assets/ui/jmatv-logo-v2.png"
               alt=""
               aria-hidden="true"
               draggable={false}
-              className="absolute pointer-events-none"
+              className="absolute pointer-events-none hidden md:block"
               style={{
                 top: 10, right: 10,
                 width: 'clamp(40px, 6vw, 64px)',

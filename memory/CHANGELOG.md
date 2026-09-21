@@ -1,5 +1,19 @@
 # Changelog
 
+## JMAtv phone-portrait logo stacking (Feb 2026)
+
+**User request**: On phone (portrait/narrow), stack the JMAtv logo above the CRT — anywhere there's no room for horizontal viewing and layout goes vertical.
+
+### `pages/JMAtvPlayerPage.js`
+- Added a `md:hidden` `<motion.div>` right after `<GameHeader>` that renders `assets/ui/jmatv-logo-v2.png` centered, sized `clamp(120px, 42vw, 200px)` with a chunky black drop-shadow + a soft yellow glow so it reads as a proper page header, not a floating decal.
+- Added `hidden md:block` to the existing in-CRT channel bug (`<img>` inside the CRT screen at `top:10, right:10`) so it renders on tablet/desktop but disappears on phones where the small CRT can't afford the corner clutter.
+
+### QA
+- Phone 390×844: `phone_stacked_logo count=1 visible=True box.y=96`, `crt_frame.y=279`, `logo_above_crt=True`.
+- Desktop 1400×900: `desktop_stacked_logo visible=False` (md:hidden takes over), `desktop_incrt_bug visible=True` (channel bug remains inside the CRT screen).
+
+
+
 ## Beat Lab canonical track order + Sight-Reading tier rename + Clear button width (Feb 2026)
 
 **User request**: In Beat Lab, tracks should stay in order — bells (Do, Re, Mi…) together, drums together, turntable together — regardless of how they were added. Sight-Reading Sprint tiers should read Easy / Medium / Hard / Wizard. Clear button text was overflowing its box; widen it.
