@@ -371,19 +371,29 @@ function HomePage() {
           { left: '89%', size: 12, dur: 12, delay: 8.5 },
           { left: '94%', size: 22, dur: 18, delay: 0 },
           { left: '97%', size: 8,  dur: 11, delay: 5 },
-        ].map((b, i) => (
-          <span
-            key={i}
-            className="home-underwater-bubble"
-            style={{
-              left: b.left,
-              width: b.size,
-              height: b.size,
-              animationDuration: `${b.dur}s`,
-              animationDelay: `${b.delay}s`,
-            }}
-          />
-        ))}
+        ].map((b, i) => {
+          // Negative animation-delay = pre-progress the CSS keyframes.
+          // Instead of every bubble waiting `b.delay` seconds to rise
+          // from the bottom (which left ~8s of dead sky at the top on
+          // first paint), we seed each one already mid-rise. The
+          // `(delay + dur/2) % dur` seed keeps the original per-bubble
+          // variation but spreads starting positions across the whole
+          // vertical column so the ocean feels alive from t=0.
+          const preRun = ((b.delay + b.dur * 0.5) % b.dur).toFixed(2);
+          return (
+            <span
+              key={i}
+              className="home-underwater-bubble"
+              style={{
+                left: b.left,
+                width: b.size,
+                height: b.size,
+                animationDuration: `${b.dur}s`,
+                animationDelay: `-${preRun}s`,
+              }}
+            />
+          );
+        })}
       </div>
       {/* Drifting Jelly Rocks blimp — behind everything */}
       <BlimpFlyby />

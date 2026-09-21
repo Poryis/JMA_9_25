@@ -58,19 +58,29 @@ export default function UnderwaterBackdrop() {
         aria-hidden="true"
         className="fixed inset-0 z-0 pointer-events-none overflow-hidden"
       >
-        {BUBBLES.map((b, i) => (
-          <span
-            key={i}
-            className="home-underwater-bubble"
-            style={{
-              left: b.left,
-              width: b.size,
-              height: b.size,
-              animationDuration: `${b.dur}s`,
-              animationDelay: `${b.delay}s`,
-            }}
-          />
-        ))}
+        {BUBBLES.map((b, i) => {
+          // Negative animation-delay = pre-progress the CSS keyframes.
+          // Instead of every bubble waiting `b.delay` seconds to rise
+          // from the bottom (which leaves ~8s of dead sky at the top on
+          // first paint), we seed each one to already be somewhere
+          // mid-rise. The `(delay + dur/2) % dur` seed keeps the
+          // original per-bubble variation but guarantees a spread of
+          // starting positions across the whole vertical column.
+          const preRun = ((b.delay + b.dur * 0.5) % b.dur).toFixed(2);
+          return (
+            <span
+              key={i}
+              className="home-underwater-bubble"
+              style={{
+                left: b.left,
+                width: b.size,
+                height: b.size,
+                animationDuration: `${b.dur}s`,
+                animationDelay: `-${preRun}s`,
+              }}
+            />
+          );
+        })}
       </div>
     </>
   );
