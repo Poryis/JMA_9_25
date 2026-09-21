@@ -241,9 +241,34 @@ export function useAudio() {
     osc.stop(ctx.currentTime + 0.28);
   }, [initAudioContext]);
 
-  // Preload on mount
+  // Preload deferred to browser idle time.
+  //
+  // Before: preloadAudio() ran synchronously inside a mount effect on
+  // every page that uses this hook. That fired 26 fetch + decodeAudioData
+  // operations up-front (8 bells + 10 drums/scratches + 8 kazoos), which
+  // on mobile competes with the initial paint and the Framer-Motion
+  // entrance animations. Beat Lab was the loudest offender because its
+  // first render also mounts big SVG mascots + a 96-cell sequencer grid.
+  //
+  // After: same preload, but wrapped in requestIdleCallback (falls back
+  // to a short setTimeout on Safari) so the browser paints the UI first
+  // and only then starts decoding audio. Everything else is unchanged —
+  // `initAudioContext` + the play* helpers still lazy-load, so if a kid
+  // manages to tap before the idle pass finishes, playback still works
+  // (fallback synth voices for anything not yet decoded).
   useEffect(() => {
-    preloadAudio();
+    const kick = () => { preloadAudio(); };
+    const ric = typeof window !== 'undefined' && window.requestIdleCallback;
+    const handle = ric
+      ? window.requestIdleCallback(kick, { timeout: 1500 })
+      : setTimeout(kick, 250);
+    return () => {
+      if (ric && typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(handle);
+      } else {
+        clearTimeout(handle);
+      }
+    };
   }, [preloadAudio]);
 
   return {

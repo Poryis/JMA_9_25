@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Play, Square, Plus, Minus, Volume2, Circle, Download } from 'lucide-react';
@@ -12,6 +12,51 @@ import usePlayer from '../hooks/usePlayer';
 import { earnSticker, earnAchievement, earnAchievementUpTo } from '../hooks/useStickers';
 
 const DEFAULT_BPM = 100;
+
+// Memoized mascots — Charlie (drum kit) and Sharky (turntable) only
+// depend on `isPlaying` and `bpm`. The parent LoopStudioPage re-renders
+// on every step tick (~150ms at 100 BPM) because `currentStep` and
+// `activeHits` are state; before this memo, both `motion.img` subtrees
+// reconciled every one of those ticks even though nothing about them
+// had changed. Wrapping them in React.memo drops that work entirely —
+// they only re-render on real prop changes (play/stop, BPM adjustment).
+const CharlieMascot = memo(function CharlieMascot({ isPlaying, bpm }) {
+  return (
+    <motion.img
+      src="assets/characters/charlie-rundmc.png"
+      alt=""
+      aria-hidden="true"
+      className="hidden md:block"
+      style={{
+        height: 176,
+        width: 'auto',
+        filter: 'drop-shadow(0 4px 0 rgba(0,0,0,0.35))',
+        flexShrink: 0,
+      }}
+      animate={isPlaying ? { y: [0, -6, 0] } : { y: 0 }}
+      transition={isPlaying ? { duration: 60 / bpm, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.3 }}
+    />
+  );
+});
+
+const SharkyMascot = memo(function SharkyMascot({ isPlaying, bpm }) {
+  return (
+    <motion.img
+      src="assets/characters/sharky-hiphop.png"
+      alt=""
+      aria-hidden="true"
+      className="hidden md:block"
+      style={{
+        height: 190,
+        width: 'auto',
+        filter: 'drop-shadow(0 4px 0 rgba(0,0,0,0.35))',
+        flexShrink: 0,
+      }}
+      animate={isPlaying ? { y: [0, -6, 0] } : { y: 0 }}
+      transition={isPlaying ? { duration: 60 / bpm, repeat: Infinity, ease: 'easeInOut', delay: (60 / bpm) / 2 } : { duration: 0.3 }}
+    />
+  );
+});
 
 // Available tracks with instruments (bells hidden visually but still playable via sequencer)
 const TRACK_PRESETS = [
@@ -920,20 +965,7 @@ function LoopStudioPage() {
               )}
               {/* Character + instrument staged on the same floor. */}
               <div className="flex items-end justify-center gap-2 md:gap-3 pt-10 pb-5 relative z-[2] px-2">
-                <motion.img
-                  src="assets/characters/charlie-rundmc.png"
-                  alt=""
-                  aria-hidden="true"
-                  className="hidden md:block"
-                  style={{
-                    height: 176,
-                    width: 'auto',
-                    filter: 'drop-shadow(0 4px 0 rgba(0,0,0,0.35))',
-                    flexShrink: 0,
-                  }}
-                  animate={isPlaying ? { y: [0, -6, 0] } : { y: 0 }}
-                  transition={isPlaying ? { duration: 60 / bpm, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.3 }}
-                />
+                <CharlieMascot isPlaying={isPlaying} bpm={bpm} />
                 <div className="flex-shrink-0">
                   <DrumKitVisual ref={drumKitRef} onHit={handleDrumTap} />
                 </div>
@@ -969,20 +1001,7 @@ function LoopStudioPage() {
                 }}
               />
               <div className="flex items-end justify-center gap-2 md:gap-3 pt-10 pb-5 relative z-[2] px-2">
-                <motion.img
-                  src="assets/characters/sharky-hiphop.png"
-                  alt=""
-                  aria-hidden="true"
-                  className="hidden md:block"
-                  style={{
-                    height: 190,
-                    width: 'auto',
-                    filter: 'drop-shadow(0 4px 0 rgba(0,0,0,0.35))',
-                    flexShrink: 0,
-                  }}
-                  animate={isPlaying ? { y: [0, -6, 0] } : { y: 0 }}
-                  transition={isPlaying ? { duration: 60 / bpm, repeat: Infinity, ease: 'easeInOut', delay: (60 / bpm) / 2 } : { duration: 0.3 }}
-                />
+                <SharkyMascot isPlaying={isPlaying} bpm={bpm} />
                 <div className="flex-shrink-0">
                   <TurntableVisual activeHits={activeHits} onScratch={handleScratchTap} />
                 </div>

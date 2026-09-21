@@ -1,5 +1,32 @@
 # Changelog
 
+## Beat Lab latency trim — deferred audio preload + memoized mascots (Feb 2026)
+
+**User request**: Beat Lab chugs on the first tap. Defer the 12 audio stems + memoize mascots so mobile Beat Lab stops chugging.
+
+### `hooks/useAudio.js` — deferred preload
+- Before: `useEffect(() => { preloadAudio(); }, [preloadAudio])` fired on every mount, kicking 26 `fetch` + `decodeAudioData` ops synchronously (8 bells + 10 drums/scratches + 8 kazoos). On mobile Beat Lab this competed with the initial paint AND Framer-Motion mascot entrance AND the 96-cell sequencer grid mount — hence the ~1–2s "did it work?" gap on first tap.
+- After: same preload, wrapped in `requestIdleCallback` (with a `setTimeout(kick, 250)` Safari fallback + proper cleanup). The browser paints the UI first, then decodes audio during idle time. Preload still finishes long before the first user tap (which is gated behind the app-wide "Tap to Start the Music" overlay anyway), but no longer blocks first paint.
+
+### `pages/LoopStudioPage.js` — memoized mascots
+- Extracted Charlie (drum-kit mascot) and Sharky (turntable mascot) into module-scope `React.memo` components: `CharlieMascot`, `SharkyMascot`. Each takes only `{ isPlaying, bpm }`.
+- Root cause of the stutter: `LoopStudioPage` state (`currentStep`, `activeHits`) mutates every ~150ms during playback at 100 BPM, forcing a full page re-render. Before memo, both `motion.img` subtrees (each with animate/transition object props) re-reconciled on every one of those ticks. After memo they only re-render on real prop changes (play/stop, BPM adjust).
+- Also added `memo` to the React import.
+
+### QA
+- Automated smoke test on `/loop-studio`:
+  - `[data-testid="loop-play-button"]` visible → tapping it flips inner text `PLAY` → `STOP` (proves loop init + audio init still works).
+  - `img[src*="charlie-rundmc"]` count = 1, `img[src*="sharky-hiphop"]` count = 1 (memo not double-mounting).
+  - "You Ranked Up! → In the Spotlight" modal appears on first play (proves progression + audio + state chain intact).
+- Webpack compile clean; pre-existing eslint warnings unrelated.
+
+### Punch-list notes
+- Not touched (out of scope, would need deeper refactor):
+  - 7 `setTimeout`/`setInterval` cleanup consolidation
+  - Grid cells (96 buttons) not memoized — currently re-render on every step highlight; would need per-row memo + step-index-only prop drilling.
+
+
+
 ## Beta punch-list batch — Sneaky Note card, Stew Kazoo route, Robot Boogie title, landscape crops, iPad unmute (Feb 2026)
 
 **User request**: The transparent styling on Sneaky Note wasn't reading; Stew Kazoo win takes kids all the way back to home; Robot Boogie chrome title doesn't match the arcade marquees. Plus batch: Beat Lab landscape back-button overlap, Robot Boogie landscape character crop, JMAtv iPad tap-to-unmute.
