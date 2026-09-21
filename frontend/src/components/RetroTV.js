@@ -101,7 +101,7 @@ export default function RetroTV() {
       whileTap={{ scale: 0.995, y: 2 }}
     >
       <div
-        className="relative rounded-3xl px-4 md:px-8 pt-12 md:pt-16 pb-6 md:pb-8"
+        className="relative rounded-3xl px-4 md:px-8 pt-8 md:pt-16 pb-4 md:pb-8"
         style={{
           background:
             'linear-gradient(180deg, #FFF9E9 0%, #FFF1CE 100%)',
@@ -109,8 +109,12 @@ export default function RetroTV() {
           boxShadow: '0 8px 0 0 var(--jma-dark)',
         }}
       >
-        {/* Content row */}
-        <div className="relative w-full flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8">
+        {/* Content row — on desktop it's a side-by-side flex-row; on
+            phones it stacks vertically. Extra `mt-6` on the TV block
+            in mobile mode keeps the rabbit-ear antennas from slashing
+            through the "Songs, stories and music adventures…" tagline
+            (the ears extend 16% above the CRT top). */}
+        <div className="relative w-full flex flex-col md:flex-row items-center justify-center gap-2 md:gap-8">
           {/* LEFT — animated JMAtv logo + tagline. Two-layer stacked mark
               matches /jmatv page: frame image hue-rotates through the
               spectrum while the JMA letters cycle complementary crayon
@@ -160,8 +164,10 @@ export default function RetroTV() {
 
           {/* CENTER — the TV itself. Non-interactive now; the outer card
               is the single click target. On phones (no md), this drops
-              BELOW the JMAtv logo via `order-2`. */}
-          <div className="flex flex-col items-center order-2 md:order-2">
+              BELOW the JMAtv logo via `order-2`, and gets extra `mt-10`
+              so the rabbit-ear antennas (which extend ~31px above the
+              CRT top on mobile) don't slash through the tagline. */}
+          <div className="flex flex-col items-center order-2 md:order-2 mt-10 md:mt-0">
             <motion.div
               data-testid="home-retro-tv-visual"
               className="relative rounded-3xl"

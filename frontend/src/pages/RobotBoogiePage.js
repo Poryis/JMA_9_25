@@ -925,10 +925,14 @@ export default function RobotBoogiePage() {
   const beatOffset = 0.5;
   const { subscribe: beatSubscribe } = useBeatPulse(getAudioClock, beatOffset);
 
-  // Background scene — auto-cycles every 35s through the 4 curated
-  // scenes in the app's flat art style. No UI to pick; kids just
-  // enjoy the changing vibe. Starting index randomized so identical
-  // sessions don't always begin the same way.
+  // Background scene — auto-cycles every 35s through the curated scenes
+  // in the app's flat art style. No UI to pick; kids just enjoy the
+  // changing vibe. Starting index randomized so identical sessions don't
+  // always begin the same way. The `% BACKGROUNDS.length` guard on the
+  // lookup below is defensive against HMR-preserved state after the
+  // registry shrinks (e.g. we recently dropped BgArcade because its
+  // marquee bulbs clashed with the arcade-style header — a stale
+  // bgIndex=2 would otherwise crash with "reading 'Comp' of undefined").
   const [bgIndex, setBgIndex] = useState(() => Math.floor(Math.random() * BACKGROUNDS.length));
   useEffect(() => {
     const id = setInterval(() => {
@@ -936,7 +940,7 @@ export default function RobotBoogiePage() {
     }, 35000);
     return () => clearInterval(id);
   }, []);
-  const BgComp = BACKGROUNDS[bgIndex].Comp;
+  const BgComp = (BACKGROUNDS[bgIndex % BACKGROUNDS.length] || BACKGROUNDS[0]).Comp;
 
   // Per-character: is this character currently DANCING? Dancing is
   // independent per character — both members of a paired team can dance
