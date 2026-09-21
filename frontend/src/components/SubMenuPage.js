@@ -297,7 +297,7 @@ function HeaderHero({ subtitle }) {
           alt="Finn"
           data-testid="submenu-hero-finn"
           className="object-contain drop-shadow-lg cursor-pointer"
-          style={{ width: 'clamp(32px, 5vw, 64px)', height: 'auto' }}
+          style={{ width: 'clamp(35px, 5.5vw, 70px)', height: 'auto' }}
           initial={{ x: -40, opacity: 0 }}
           animate={{ x: 0, opacity: 1, y: [0, -6, 0] }}
           transition={{
@@ -316,7 +316,7 @@ function HeaderHero({ subtitle }) {
           data-testid="submenu-hero-logo"
           className="object-contain cursor-pointer"
           style={{
-            width: 'clamp(64px, 11vw, 140px)',
+            width: 'clamp(70px, 12.1vw, 154px)',
             height: 'auto',
             filter: 'drop-shadow(0 6px 10px rgba(0,0,0,0.18))',
           }}
@@ -333,7 +333,7 @@ function HeaderHero({ subtitle }) {
           alt="Charlie"
           data-testid="submenu-hero-charlie"
           className="object-contain drop-shadow-lg cursor-pointer"
-          style={{ width: 'clamp(40px, 7vw, 84px)', height: 'auto' }}
+          style={{ width: 'clamp(44px, 7.7vw, 92px)', height: 'auto' }}
           initial={{ x: 40, opacity: 0 }}
           animate={{ x: 0, opacity: 1, y: [0, -6, 0] }}
           transition={{
