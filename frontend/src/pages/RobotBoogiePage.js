@@ -1374,6 +1374,13 @@ export default function RobotBoogiePage() {
                   //   4 |   30%    | 300px |    -20
                   //  5-6|   26%    | 240px |    -20
                   //  7-8|   22%    | 200px |    -18
+                  //
+                  // Phone wrap: for n>=3 we ALSO tack on `min-w-[33vw]`
+                  // (with a `sm:min-w-0` reset so desktop is unaffected).
+                  // On a 390px phone with a ~270px center column, that
+                  // forces ~129px per wrapper — 3 chars won't fit in one
+                  // row, so the band wraps to 2×2 / 2+1 much earlier
+                  // than natural flex-wrap alone.
                   let widthPct, maxW, negPx;
                   if (n === 1)      { widthPct = '58%'; maxW = '400px'; negPx = 0; }
                   else if (n === 2) { widthPct = '52%'; maxW = '400px'; negPx = 28; }
@@ -1381,6 +1388,7 @@ export default function RobotBoogiePage() {
                   else if (n === 4) { widthPct = '30%'; maxW = '300px'; negPx = 20; }
                   else if (n <= 6)  { widthPct = '26%'; maxW = '240px'; negPx = 20; }
                   else               { widthPct = '22%'; maxW = '200px'; negPx = 18; }
+                  const phoneWrapClass = n >= 3 ? 'min-w-[33vw] sm:min-w-0' : '';
 
                   return (
                     <motion.div
@@ -1390,7 +1398,7 @@ export default function RobotBoogiePage() {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 40, scale: 0.6 }}
                       transition={{ type: 'spring', stiffness: 260, damping: 24 }}
-                      className="min-w-0 flex-shrink-0"
+                      className={`min-w-0 flex-shrink-0 ${phoneWrapClass}`}
                       style={{
                         width: widthPct,
                         maxWidth: maxW,

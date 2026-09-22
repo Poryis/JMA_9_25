@@ -74,21 +74,12 @@ export function BgLab() {
       <rect x="0" y="620" width="1600" height="280" fill="#3a3350" stroke="#000" strokeWidth={S} />
       {/* Floor line */}
       <line x1="0" y1="620" x2="1600" y2="620" stroke="#000" strokeWidth={S} />
-      {/* Wall panels — flat rectangles with thick outlines and a bright
-          core that softly pulses out-of-phase for a bio-lab feel. */}
-      {[
-        { x: 80,   delay: '0s'   },
-        { x: 320,  delay: '0.7s' },
-        { x: 1280, delay: '1.4s' },
-        { x: 1440, delay: '2.1s' },
-      ].map(({ x, delay }) => (
-        <g key={x}>
-          <rect x={x} y={140} width={80} height={340} fill="#0a1420" stroke="#000" strokeWidth={S} />
-          <rect x={x + 14} y={160} width={52} height={300} fill="#3ec8ff"
-                style={{ animation: `jmaBgPanelPulse 3.6s ${delay} ease-in-out infinite` }} />
-          <rect x={x + 14} y={160} width={52} height={300} fill="none" stroke="#7feaff" strokeWidth={3} />
-        </g>
-      ))}
+      {/* Wall panels REMOVED — the four bio-lum panels used to sit at
+          x=80, 320, 1280, 1440 (two on each side). They read as
+          bright cyan "windows" that clashed hard against the newly
+          added left+right character rails on the page. Cables and
+          top vents kept; the walls now stay plain so the characters
+          are the visual focus on the sides. */}
       {/* Vents */}
       {[560, 900].map((x) => (
         <g key={x}>
