@@ -912,15 +912,6 @@ function CompactChar({ cfg, selected, onClick, zapping, beatSubscribe, bobOffset
 // Main page
 // ============================================================
 const EMPTY_DANCING = CHARACTERS.reduce((acc, c) => { acc[c.id] = false; return acc; }, {});
-
-// Rail split — waiting characters no longer live in a horizontal strip
-// under the Time Machine (that strip kept getting pushed off-screen
-// when the active band grew). They're now split into two vertical
-// rails hugging the sides, each with a robot bookend on top. Order
-// preserved from CHARACTERS above; robots pinned to the top of each
-// rail per user request.
-const LEFT_RAIL_IDS  = ['robot1', 'chunk', 'jellybone', 'finn'];
-const RIGHT_RAIL_IDS = ['robot2', 'jazzy', 'lou',       'charlie'];
 const EMPTY_TEAM_STEM = Object.keys(TEAMS).reduce((acc, t) => { acc[t] = null; return acc; }, {});
 
 export default function RobotBoogiePage() {
@@ -1241,22 +1232,14 @@ export default function RobotBoogiePage() {
         </div>
       </div>
 
-      {/* ==== MAIN STAGE ====
-          Three-column composition: LEFT RAIL (waiting characters,
-          Robot 1 on top) — CENTER (active band + Time Machine) —
-          RIGHT RAIL (waiting characters, Robot 2 on top). Old design
-          had all 8 waiting chars in a horizontal strip under the Time
-          Machine, which meant adding a dancer pushed the strip
-          off-screen. The rails are horizontally siblings to the
-          stage, so the active band and lineup no longer compete for
-          vertical space. */}
+      {/* ==== MAIN STAGE ==== 
+          Three vertically stacked zones — active band up top, Time
+          Machine in the middle, tappable lineup at the bottom. All
+          three sit inside a max-width column so the composition stays
+          coherent on ultra-wide screens. */}
       <div ref={stageRef}
-           className="relative z-10 flex-1 w-full mx-auto px-2 md:px-4 pb-2 grid items-stretch"
-           style={{
-             maxWidth: '1200px',
-             gridTemplateColumns: 'auto minmax(0, 1fr) auto',
-             columnGap: 'clamp(4px, 1vw, 16px)',
-           }}>
+           className="relative z-10 flex-1 flex flex-col items-center w-full mx-auto px-2 md:px-4 pb-2"
+           style={{ maxWidth: '1200px' }}>
 
         {/* Lightning bolts — drawn OVER the entire stage from the Time
             Machine "mouth" up to every active character. Sits above
@@ -1272,222 +1255,190 @@ export default function RobotBoogiePage() {
           beatSubscribe={beatSubscribe}
           measureEpoch={JSON.stringify(charTransforms)}
         />
+        {/* ---- Active band (top) ----
+            Flex-wrap so we get a second row automatically once there
+            are 5+ dancers. Zero horizontal gap between dancers by
+            design — the transparent whitespace inside each character's
+            3:4 slot already gives plenty of breathing room.
 
-        {/* ---- LEFT RAIL ----
-            Robot 1 pinned on top, three other members below. Fixed-
-            aspect tiles stack vertically; whole rail auto-widths so
-            the center column soaks the rest of the row. */}
+            overflow: visible (not hidden) so a kid dragging a character
+            up or down a few pixels doesn't get their head / feet clipped
+            at the container edge. Drag-clamp bounds in
+            handleCharDrag() keep them from wandering too far anyway. */}
         <div
-          data-testid="robot-boogie-rail-left"
-          className="flex flex-col items-center justify-start gap-1 md:gap-2 pt-2 self-stretch"
+          data-testid="robot-boogie-active-band"
+          className="w-full flex-1 flex flex-wrap items-end justify-center content-center gap-0 pt-2 pb-0"
+          style={{
+            // Short landscape viewports (e.g. phones rotated sideways
+            // ~360px tall) were clipping character feet because the
+            // static 340px reservation left almost no room. Clamp so
+            // the band always keeps at least ~160px, tops out at
+            // ~640px, and gracefully shrinks in between. minHeight
+            // guarantees at least one full character even when
+            // 100vh - 260 goes negative in landscape.
+            minHeight: 'clamp(150px, 30vh, 220px)',
+            maxHeight: 'clamp(200px, calc(100vh - 260px), 640px)',
+            overflow: 'visible',
+          }}
         >
-          {LEFT_RAIL_IDS.map((id, i) => {
-            const cfg = CHARACTERS.find((c) => c.id === id);
-            if (!cfg) return null;
-            return (
-              <CompactChar
-                key={cfg.id}
-                cfg={cfg}
-                selected={!!dancing[cfg.id]}
-                onClick={handleCharacterClick}
-                zapping={zappingId === cfg.id}
-                beatSubscribe={beatSubscribe}
-                bobOffset={i * 0.11}
-              />
-            );
-          })}
-        </div>
-
-        {/* ---- CENTER: active band + Time Machine ----
-            min-w-0 lets the flex-wrap active band shrink correctly
-            inside the grid cell (grid children default to min-content
-            width, which breaks the negative-margin wrap math). */}
-        <div className="flex flex-col items-center min-w-0">
-          {/* ---- Active band (top of center) ----
-              Flex-wrap so we get a second row automatically once there
-              are 5+ dancers. Zero horizontal gap between dancers by
-              design — the transparent whitespace inside each character's
-              3:4 slot already gives plenty of breathing room.
-
-              overflow: visible (not hidden) so a kid dragging a character
-              up or down a few pixels doesn't get their head / feet clipped
-              at the container edge. Drag-clamp bounds in
-              handleCharDrag() keep them from wandering too far anyway. */}
-          <div
-            data-testid="robot-boogie-active-band"
-            className="w-full flex-1 flex flex-wrap items-end justify-center content-center gap-0 pt-2 pb-0"
-            style={{
-              // Short landscape viewports (e.g. phones rotated sideways
-              // ~360px tall) were clipping character feet because the
-              // static 340px reservation left almost no room. Clamp so
-              // the band always keeps at least ~160px, tops out at
-              // ~640px, and gracefully shrinks in between. minHeight
-              // guarantees at least one full character even when
-              // 100vh - 260 goes negative in landscape.
-              minHeight: 'clamp(150px, 30vh, 220px)',
-              maxHeight: 'clamp(200px, calc(100vh - 260px), 640px)',
-              overflow: 'visible',
-            }}
-          >
-            {activeChars.length === 0 ? (
-              <motion.div
-                key="empty-hint"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-center self-center pointer-events-none w-full"
-                style={{ color: 'white' }}
+          {activeChars.length === 0 ? (
+            <motion.div
+              key="empty-hint"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center self-center pointer-events-none w-full"
+              style={{ color: 'white' }}
+            >
+              <div
+                className="font-black uppercase tracking-widest text-sm md:text-base"
+                style={{ opacity: 0.85 }}
               >
-                <div
-                  className="font-black uppercase tracking-widest text-sm md:text-base"
-                  style={{ opacity: 0.85 }}
-                >
-                  Tap a Club Member on the sides
-                </div>
-                <div
-                  className="font-bold text-xs md:text-sm"
-                  style={{ opacity: 0.65, marginTop: '4px' }}
-                >
-                  The Time Machine will zap them onto the stage ⚡
-                </div>
-              </motion.div>
-            ) : (
-              <AnimatePresence mode="popLayout" initial={false}>
-                {activeChars.map((cfg) => {
-                  const n = activeChars.length;
-                  // Widths + negative horizontal margins do the "closer
-                  // together" work: each wrapper is BIGGER than we want
-                  // it to render, with a negative margin on each side
-                  // that pulls neighboring wrappers into overlap. The
-                  // sprites' baked-in transparent side-padding then
-                  // overlaps invisibly, so characters visually touch.
-                  // The wrap math (which uses margin-box aka outer size)
-                  // stays correct because outer = width + 2 × margin.
-                  //
-                  // Center column is narrower than the old full-width
-                  // stage (the two rails eat ~120–200px total), so the
-                  // per-count widths trim vs. the pre-rail values.
-                  //
-                  //   n | widthPct |  maxW | negMarginPx
-                  //   1 |   58%    | 400px |      0
-                  //   2 |   52%    | 400px |    -28
-                  //   3 |   38%    | 340px |    -22
-                  //   4 |   30%    | 300px |    -20
-                  //  5-6|   26%    | 240px |    -20
-                  //  7-8|   22%    | 200px |    -18
-                  //
-                  // Phone wrap: for n>=3 we ALSO tack on `min-w-[33vw]`
-                  // (with a `sm:min-w-0` reset so desktop is unaffected).
-                  // On a 390px phone with a ~270px center column, that
-                  // forces ~129px per wrapper — 3 chars won't fit in one
-                  // row, so the band wraps to 2×2 / 2+1 much earlier
-                  // than natural flex-wrap alone.
-                  let widthPct, maxW, negPx;
-                  if (n === 1)      { widthPct = '58%'; maxW = '400px'; negPx = 0; }
-                  else if (n === 2) { widthPct = '52%'; maxW = '400px'; negPx = 28; }
-                  else if (n === 3) { widthPct = '38%'; maxW = '340px'; negPx = 22; }
-                  else if (n === 4) { widthPct = '30%'; maxW = '300px'; negPx = 20; }
-                  else if (n <= 6)  { widthPct = '26%'; maxW = '240px'; negPx = 20; }
-                  else               { widthPct = '22%'; maxW = '200px'; negPx = 18; }
-                  const phoneWrapClass = n >= 3 ? 'min-w-[33vw] sm:min-w-0' : '';
+                Tap a Club Member below
+              </div>
+              <div
+                className="font-bold text-xs md:text-sm"
+                style={{ opacity: 0.65, marginTop: '4px' }}
+              >
+                The Time Machine will zap them onto the stage ⚡
+              </div>
+            </motion.div>
+          ) : (
+            <AnimatePresence mode="popLayout" initial={false}>
+              {activeChars.map((cfg) => {
+                const n = activeChars.length;
+                // Widths + negative horizontal margins do the "closer
+                // together" work: each wrapper is BIGGER than we want
+                // it to render, with a negative margin on each side
+                // that pulls neighboring wrappers into overlap. The
+                // sprites' baked-in transparent side-padding then
+                // overlaps invisibly, so characters visually touch.
+                // The wrap math (which uses margin-box aka outer size)
+                // stays correct because outer = width + 2 × margin.
+                //
+                // n=4 fixed (Feb 30 pm): keep in a SINGLE row so the
+                // 2×2 wrap doesn't push the Time Machine down into the
+                // bottom lineup on 1280×800.
+                //
+                //   n | widthPct |  maxW | negMarginPx | outer = wrap size
+                //   1 |   55%    | 440px |      0      |   440
+                //   2 |   50%    | 440px |    -30      |   380
+                //   3 |   36%    | 380px |    -25      |   330
+                //   4 |   28%    | 340px |    -22      |   296   (4×296=1184<1200 ✓)
+                //  5-6|   24%    | 260px |    -22      |   216   (3-per-row wrap, height ~347px)
+                //  7-8|   20%    | 220px |    -20      |   180   (4-per-row wrap, height ~293px)
+                let widthPct, maxW, negPx;
+                if (n === 1)      { widthPct = '55%'; maxW = '440px'; negPx = 0; }
+                else if (n === 2) { widthPct = '50%'; maxW = '440px'; negPx = 30; }
+                else if (n === 3) { widthPct = '36%'; maxW = '380px'; negPx = 25; }
+                else if (n === 4) { widthPct = '28%'; maxW = '340px'; negPx = 22; }
+                else if (n <= 6)  { widthPct = '24%'; maxW = '260px'; negPx = 22; }
+                else               { widthPct = '20%'; maxW = '220px'; negPx = 20; }
 
-                  return (
-                    <motion.div
-                      key={cfg.id}
-                      layout
-                      initial={{ opacity: 0, y: 60, scale: 0.6 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 40, scale: 0.6 }}
-                      transition={{ type: 'spring', stiffness: 260, damping: 24 }}
-                      className={`min-w-0 flex-shrink-0 ${phoneWrapClass}`}
-                      style={{
-                        width: widthPct,
-                        maxWidth: maxW,
-                        marginLeft: `-${negPx}px`,
-                        marginRight: `-${negPx}px`,
-                        // Wrapper is pointer-events: none so its overlapping
-                        // side-margins don't swallow taps meant for a
-                        // neighboring character. The narrow inner hit-div
-                        // inside CharacterSlot is the sole pointer target.
-                        pointerEvents: 'none',
-                      }}
-                    >
-                      <CharacterSlot
-                        cfg={cfg}
-                        activeStemIndex={0}
-                        zapping={zappingId === cfg.id}
-                        slotRef={getSlotRef(cfg.id)}
-                        beatSubscribe={beatSubscribe}
-                        transform={charTransforms[cfg.id]}
-                        onBoop={handleCharBoop}
-                        onDrag={handleCharDrag}
-                        onWheel={handleCharWheel}
-                      />
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
-            )}
-          </div>
-
-          {/* ---- Time Machine (bottom of center) ----
-              Sits on a glowing "dais" — an elliptical stage puck that
-              reads as a raised pedestal. Also anchors the SVG lightning
-              bolts that shoot up from the machine "mouth". */}
-          <div
-            className="w-full flex justify-center items-center py-0 relative"
-            data-testid="robot-boogie-time-machine-zone"
-          >
-            {/* Pedestal / dais under the machine — an elliptical stage
-                puck that reads as a raised lab platform. Also serves as
-                the visual "floor" the machine stands on. */}
-            <div
-              aria-hidden="true"
-              className="absolute pointer-events-none"
-              style={{
-                bottom: '2%',
-                width: 'clamp(255px, 41vw, 500px)',
-                height: '32px',
-                background:
-                  'radial-gradient(ellipse at 50% 50%, rgba(255,220,120,0.45) 0%, rgba(120,80,180,0.35) 40%, rgba(0,0,0,0.0) 75%)',
-                filter: 'blur(2px)',
-              }}
-            />
-            {/* Soft halo behind the machine so it reads as the anchor of
-                the composition. Scales with the machine itself. */}
-            <div
-              aria-hidden="true"
-              className="absolute pointer-events-none"
-              style={{
-                width: 'clamp(265px, 43vw, 520px)',
-                aspectRatio: '2 / 1',
-                background:
-                  'radial-gradient(ellipse at center, rgba(255,220,120,0.28) 0%, rgba(255,220,120,0.10) 40%, transparent 70%)',
-                filter: 'blur(6px)',
-              }}
-            />
-            <TimeMachine
-              anyActive={activeCount > 0}
-              flashKey={flashKey}
-              tmRef={timeMachineRef}
-              beatSubscribe={beatSubscribe}
-              triggerStab={triggerStab}
-              startRiser={startRiser}
-              stopRiser={stopRiser}
-            />
-          </div>
+                return (
+                  <motion.div
+                    key={cfg.id}
+                    layout
+                    initial={{ opacity: 0, y: 60, scale: 0.6 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 40, scale: 0.6 }}
+                    transition={{ type: 'spring', stiffness: 260, damping: 24 }}
+                    className="min-w-0 flex-shrink-0"
+                    style={{
+                      width: widthPct,
+                      maxWidth: maxW,
+                      marginLeft: `-${negPx}px`,
+                      marginRight: `-${negPx}px`,
+                      // Wrapper is pointer-events: none so its overlapping
+                      // side-margins don't swallow taps meant for a
+                      // neighboring character. The narrow inner hit-div
+                      // inside CharacterSlot is the sole pointer target.
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    <CharacterSlot
+                      cfg={cfg}
+                      activeStemIndex={0}
+                      zapping={zappingId === cfg.id}
+                      slotRef={getSlotRef(cfg.id)}
+                      beatSubscribe={beatSubscribe}
+                      transform={charTransforms[cfg.id]}
+                      onBoop={handleCharBoop}
+                      onDrag={handleCharDrag}
+                      onWheel={handleCharWheel}
+                    />
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          )}
         </div>
 
-        {/* ---- RIGHT RAIL ----
-            Robot 2 pinned on top, three other members below. Mirrors
-            the left rail. */}
+        {/* ---- Time Machine (centerpiece) ----
+            Sits on a glowing "dais" — an elliptical stage puck that
+            reads as a raised pedestal. Also anchors the SVG lightning
+            bolts that shoot up from the machine "mouth". */}
         <div
-          data-testid="robot-boogie-rail-right"
-          className="flex flex-col items-center justify-start gap-1 md:gap-2 pt-2 self-stretch"
+          className="w-full flex justify-center items-center py-0 relative"
+          data-testid="robot-boogie-time-machine-zone"
         >
-          {RIGHT_RAIL_IDS.map((id, i) => {
-            const cfg = CHARACTERS.find((c) => c.id === id);
-            if (!cfg) return null;
-            return (
+          {/* Pedestal / dais under the machine — an elliptical stage
+              puck that reads as a raised lab platform. Also serves as
+              the visual "floor" the machine stands on. */}
+          <div
+            aria-hidden="true"
+            className="absolute pointer-events-none"
+            style={{
+              bottom: '2%',
+              width: 'clamp(255px, 41vw, 500px)',
+              height: '32px',
+              background:
+                'radial-gradient(ellipse at 50% 50%, rgba(255,220,120,0.45) 0%, rgba(120,80,180,0.35) 40%, rgba(0,0,0,0.0) 75%)',
+              filter: 'blur(2px)',
+            }}
+          />
+          {/* Soft halo behind the machine so it reads as the anchor of
+              the composition. Scales with the machine itself. */}
+          <div
+            aria-hidden="true"
+            className="absolute pointer-events-none"
+            style={{
+              width: 'clamp(265px, 43vw, 520px)',
+              aspectRatio: '2 / 1',
+              background:
+                'radial-gradient(ellipse at center, rgba(255,220,120,0.28) 0%, rgba(255,220,120,0.10) 40%, transparent 70%)',
+              filter: 'blur(6px)',
+            }}
+          />
+          <TimeMachine
+            anyActive={activeCount > 0}
+            flashKey={flashKey}
+            tmRef={timeMachineRef}
+            beatSubscribe={beatSubscribe}
+            triggerStab={triggerStab}
+            startRiser={startRiser}
+            stopRiser={stopRiser}
+          />
+        </div>
+
+        {/* ---- Character lineup (bottom, always 8) ----
+            Sits on a beat-driven "disco floor" — a soft ellipse behind
+            the whole strip that flickers hue on every other beat. */}
+        <div className="relative w-full">
+          <div
+            ref={floorTilePulseRef}
+            aria-hidden="true"
+            className="absolute inset-x-0 pointer-events-none"
+            style={{
+              bottom: '-6px',
+              top: '30%',
+              transition: 'background 90ms ease-out',
+            }}
+          />
+          <div
+            data-testid="robot-boogie-lineup"
+            className="relative w-full flex justify-center items-end gap-0 md:gap-1 pt-0 pb-2"
+          >
+            {CHARACTERS.map((cfg, i) => (
               <CompactChar
                 key={cfg.id}
                 cfg={cfg}
@@ -1497,8 +1448,8 @@ export default function RobotBoogiePage() {
                 beatSubscribe={beatSubscribe}
                 bobOffset={i * 0.11}
               />
-            );
-          })}
+            ))}
+          </div>
         </div>
       </div>
     </div>
