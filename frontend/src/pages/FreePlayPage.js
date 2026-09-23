@@ -6,6 +6,7 @@ import { GameHeader } from '../components/GameUI';
 import RoomCharacters from '../components/RoomCharacters';
 import { XylophoneInstrument, PianoInstrument } from '../components/Instruments';
 import { FullscreenButton } from '../components/FullscreenButton';
+import { JAM_BACKDROPS } from '../components/JamSessionBackdrops';
 import { earnSticker, earnAchievement, earnAchievementUpTo } from '../hooks/useStickers';
 import { SONG_LIBRARY } from '../data/songs';
 import useAudio from '../hooks/useAudio';
@@ -772,11 +773,42 @@ function FreePlayPage() {
   const nextGuidedNote = guidedMode && currentGuidedSong ? currentGuidedSong.notes[guidedStep] : null;
   const isDrumTab = activeTab === 'drums';
 
+  // Prototype backdrops — auto-cycle every 30s between "Amphitheater at
+  // Dusk" and "Music-Note Sky" so the user can preview both without a
+  // picker UI. Once one is chosen we'll drop the cycle and hardcode.
+  // Defensive `|| JAM_BACKDROPS[0]` guards against a stale index if the
+  // registry ever shrinks (learned this from the Robot Boogie crash).
+  const [jamBgIndex, setJamBgIndex] = useState(() => Math.floor(Math.random() * JAM_BACKDROPS.length));
+  useEffect(() => {
+    const id = setInterval(() => {
+      setJamBgIndex((i) => (i + 1) % JAM_BACKDROPS.length);
+    }, 30000);
+    return () => clearInterval(id);
+  }, []);
+  const JamBg = (JAM_BACKDROPS[jamBgIndex % JAM_BACKDROPS.length] || JAM_BACKDROPS[0]).Comp;
+
   return (
-    <div className="min-h-screen flex flex-col relative" data-testid="free-play-page"
+    <div className="min-h-screen flex flex-col relative overflow-hidden" data-testid="free-play-page"
       style={{
-        background: 'radial-gradient(circle at 15% 20%, rgba(255, 204, 0, 0.28) 0%, transparent 35%), radial-gradient(circle at 85% 25%, rgba(76, 217, 100, 0.28) 0%, transparent 40%), radial-gradient(circle at 50% 90%, rgba(66, 133, 244, 0.28) 0%, transparent 45%), radial-gradient(circle at 25% 80%, rgba(255, 59, 48, 0.22) 0%, transparent 40%), radial-gradient(circle at 75% 75%, rgba(175, 82, 222, 0.22) 0%, transparent 38%), linear-gradient(135deg, #FFF9E6 0%, #FFF4F4 50%, #F0F9FF 100%)'
+        // Fallback color only — the JamBg SVG/gradient below covers the
+        // whole viewport. Kept so a brief flash during Suspense/HMR isn't
+        // white.
+        backgroundColor: '#3A0F5C',
       }}>
+      {/* Cycling backdrop — sits behind everything via absolute inset-0
+          + pointer-events:none. z-0 anchors it below the fixed header
+          and game content, which get their own stacking via the flex
+          flow. */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 pointer-events-none"
+        style={{ zIndex: 0 }}
+        data-testid="jam-session-backdrop"
+        data-backdrop-id={JAM_BACKDROPS[jamBgIndex % JAM_BACKDROPS.length]?.id}
+      >
+        <JamBg />
+      </div>
+
       <GameHeader title="Jam Session" showHomeButton={true} backLink={{ to: '/create', label: 'Create' }} />
       <FullscreenButton />
       <AnimatePresence>{particles.map(p => <ParticleBurst key={p.id} color={p.color} />)}</AnimatePresence>
