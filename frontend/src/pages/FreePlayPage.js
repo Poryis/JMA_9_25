@@ -6,7 +6,7 @@ import { GameHeader } from '../components/GameUI';
 import RoomCharacters from '../components/RoomCharacters';
 import { XylophoneInstrument, PianoInstrument } from '../components/Instruments';
 import { FullscreenButton } from '../components/FullscreenButton';
-import SpaceBackdrop, { SPACE_BG_STYLE } from '../components/SpaceBackdrop';
+import UnderwaterBackdrop from '../components/UnderwaterBackdrop';
 import { earnSticker, earnAchievement, earnAchievementUpTo } from '../hooks/useStickers';
 import { SONG_LIBRARY } from '../data/songs';
 import useAudio from '../hooks/useAudio';
@@ -466,7 +466,7 @@ function JamAlongControls({ jamTrackId, onPick, audioRef, getAudioGraph }) {
           className="chunky-btn bg-[var(--jma-yellow)] text-[var(--jma-dark)] px-2 py-0.5 md:py-1 flex items-center gap-1 text-[10px] md:text-xs font-bold touch-manipulation"
           onClick={() => setOpen(o => !o)}
         >
-          <Headphones className="w-3 h-3" /> Jam Along
+          <Headphones className="w-3 h-3" /> Play a Song
         </button>
       ) : (
         <div className="flex items-center gap-1">
@@ -774,13 +774,12 @@ function FreePlayPage() {
   const isDrumTab = activeTab === 'drums';
 
   return (
-    <div className="min-h-screen flex flex-col relative" data-testid="free-play-page" style={SPACE_BG_STYLE}>
-      {/* JMAtv space backdrop — same starfield + drifting nebula the
-          JMAtv routes use, so the app has a consistent "night sky"
-          vibe wherever kids "perform." SPACE_BG_STYLE sets the deep
-          navy fallback color; <SpaceBackdrop /> renders the stars,
-          nebula, and orbiting moon on top. */}
-      <SpaceBackdrop />
+    <div className="min-h-screen flex flex-col relative" data-testid="free-play-page">
+      {/* Underwater backdrop (same as HomePage / sub-menus) — button
+          borders on the toolbar chips got lost against the JMAtv space
+          scene, and the sea has the added bonus of the rising bubbles
+          reading like "musical notes floating up." */}
+      <UnderwaterBackdrop />
 
       <GameHeader title="Jam Session" showHomeButton={true} backLink={{ to: '/create', label: 'Create' }} />
       <FullscreenButton />
@@ -792,7 +791,18 @@ function FreePlayPage() {
           below the circle on phones, making it feel "bunched up" at the top).
           Desktop keeps justify-start so the layout doesn't drift around. */}
       <main className="flex-1 flex flex-col items-center justify-center md:justify-start pt-16 md:pt-24 pb-2 px-2">
-        <div className="flex flex-wrap items-center justify-center gap-1 md:gap-2 mb-2 md:mb-2">
+        {/* Toolbar row — wrapped in a chunky opaque card so the tab pills,
+            Play-a-Song button, and Record button always stand out against
+            whatever backdrop is behind (underwater sea, space, whatever).
+            Before: the white tab pills disappeared into the light-blue
+            water; the Play/Record chips lost their dark border too. */}
+        <div className="flex flex-wrap items-center justify-center gap-1 md:gap-2 mb-2 md:mb-2 rounded-2xl px-2 py-1 md:px-3 md:py-1.5 relative"
+          style={{
+            backgroundColor: 'rgba(255,249,230,0.95)',
+            border: '3px solid var(--jma-dark)',
+            boxShadow: '0 4px 0 0 var(--jma-dark)',
+            zIndex: 20,
+          }}>
           <div className="game-card px-1 py-0.5 md:px-2 md:py-1 flex items-center gap-1">
             {INSTRUMENT_TABS.map(tab => (
               <button key={tab.id} data-testid={`sound-mode-${tab.id}`}
@@ -827,7 +837,7 @@ function FreePlayPage() {
                 }}
                 disabled={recorder.isProcessing}
               >
-                <Mic className="w-3 h-3" /> Capture this Jam
+                <Mic className="w-3 h-3" /> Record My Jam
               </button>
             ) : (
               <button
@@ -856,7 +866,7 @@ function FreePlayPage() {
                     onClick={playBack}
                     disabled={isPlayingBack}
                   >
-                    <Play className="w-3 h-3" /> {isPlayingBack ? 'Playing...' : `Listen Here (${recording.length})`}
+                    <Play className="w-3 h-3" /> {isPlayingBack ? 'Playing...' : 'Play It Back'}
                   </button>
                 )}
                 {recorder.lastMp3Url && (
