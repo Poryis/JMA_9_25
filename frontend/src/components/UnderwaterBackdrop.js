@@ -31,7 +31,15 @@ const BUBBLES = [
   { left: '97%', size: 8,  dur: 11, delay: 5 },
 ];
 
-export default function UnderwaterBackdrop() {
+export default function UnderwaterBackdrop({ deep = false } = {}) {
+  // `deep` shifts the background image UP so the sandy floor + coral row
+  // rolls off the bottom of the viewport. Handy on pages where content
+  // (drum kit, instruments) sits center-of-screen and would otherwise
+  // rest ON the sand — Jam Session uses this so everything looks like
+  // it's floating in the mid-column of the ocean instead of on the
+  // seafloor. Inline style beats the `.home-underwater-bg-layer` class
+  // rule via CSS specificity, no CSS edit needed.
+  const bgPosition = deep ? 'center 20%' : 'center bottom';
   return (
     <>
       <div
@@ -39,6 +47,7 @@ export default function UnderwaterBackdrop() {
         className="fixed inset-0 z-0 home-underwater-bg-layer pointer-events-none"
         style={{
           backgroundImage: `url(${process.env.PUBLIC_URL || ''}/assets/backgrounds/underwater.png)`,
+          backgroundPosition: bgPosition,
         }}
       />
       <div

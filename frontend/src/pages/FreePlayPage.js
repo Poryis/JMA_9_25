@@ -778,8 +778,11 @@ function FreePlayPage() {
       {/* Underwater backdrop (same as HomePage / sub-menus) — button
           borders on the toolbar chips got lost against the JMAtv space
           scene, and the sea has the added bonus of the rising bubbles
-          reading like "musical notes floating up." */}
-      <UnderwaterBackdrop />
+          reading like "musical notes floating up." `deep` shifts the
+          image up so the sandy floor rolls off the bottom — content
+          reads as floating in the water column, not sitting on the
+          seabed. */}
+      <UnderwaterBackdrop deep />
 
       <GameHeader title="Jam Session" showHomeButton={true} backLink={{ to: '/create', label: 'Create' }} />
       <FullscreenButton />
