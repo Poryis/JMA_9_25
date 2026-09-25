@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head><title>Swap State Test</title></head>
+<body style="background:#87CEEB;display:flex;flex-wrap:wrap;gap:20px;padding:40px;justify-content:center;align-items:center;min-height:100vh;">
+<h1 style="width:100%;text-align:center;font-family:sans-serif;">Click or press 1-8 - image MUST swap on press, swap back on release</h1>
+<div id="bells" style="display:flex;gap:16px;"></div>
+<script>
+const notes = [
+  {note:'C',img1:'/assets/bells/C 1.png',img2:'/assets/bells/C 2.png',key:'1'},
+  {note:'D',img1:'/assets/bells/D 1.png',img2:'/assets/bells/D 2.png',key:'2'},
+  {note:'E',img1:'/assets/bells/E 1.png',img2:'/assets/bells/E 2.png',key:'3'},
+  {note:'F',img1:'/assets/bells/F 1.png',img2:'/assets/bells/F 2.png',key:'4'},
+  {note:'G',img1:'/assets/bells/G 1.png',img2:'/assets/bells/G 2.png',key:'5'},
+  {note:'A',img1:'/assets/bells/A 1.png',img2:'/assets/bells/A 2.png',key:'6'},
+  {note:'B',img1:'/assets/bells/B 1.png',img2:'/assets/bells/B 2.png',key:'7'},
+  {note:'HC',img1:'/assets/bells/C 1.png',img2:'/assets/bells/C 2.png',key:'8'},
+];
+
+// Preload all images
+notes.forEach(n => { const a = new Image(); a.src = n.img1; const b = new Image(); b.src = n.img2; });
+
+const container = document.getElementById('bells');
+const imgs = {};
+
+notes.forEach(n => {
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;cursor:pointer;user-select:none;';
+  
+  const img = document.createElement('img');
+  img.src = n.img1;
+  img.style.cssText = 'width:120px;height:140px;object-fit:contain;pointer-events:none;';
+  img.draggable = false;
+  
+  const label = document.createElement('div');
+  label.textContent = n.note + ' (' + n.key + ')';
+  label.style.cssText = 'font-family:sans-serif;font-weight:bold;font-size:18px;margin-top:8px;';
+  
+  wrap.appendChild(img);
+  wrap.appendChild(label);
+  container.appendChild(wrap);
+  imgs[n.key] = { img, n };
+
+  // Mouse
+  wrap.addEventListener('mousedown', () => { img.src = n.img2; img.style.transform = 'scale(0.9)'; });
+  wrap.addEventListener('mouseup', () => { img.src = n.img1; img.style.transform = 'scale(1)'; });
+  wrap.addEventListener('mouseleave', () => { img.src = n.img1; img.style.transform = 'scale(1)'; });
+  // Touch
+  wrap.addEventListener('touchstart', (e) => { e.preventDefault(); img.src = n.img2; img.style.transform = 'scale(0.9)'; });
+  wrap.addEventListener('touchend', (e) => { e.preventDefault(); img.src = n.img1; img.style.transform = 'scale(1)'; });
+});
+
+// Keyboard
+document.addEventListener('keydown', (e) => {
+  const entry = imgs[e.key];
+  if (entry) { entry.img.src = entry.n.img2; entry.img.style.transform = 'scale(0.9)'; }
+});
+document.addEventListener('keyup', (e) => {
+  const entry = imgs[e.key];
+  if (entry) { entry.img.src = entry.n.img1; entry.img.style.transform = 'scale(1)'; }
+});
+</script>
+</body>
+</html>

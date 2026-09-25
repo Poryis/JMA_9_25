@@ -1,0 +1,853 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sniglet:wght@800&display=swap');
+
+@font-face {
+  font-family: 'Comic Kings';
+  src: url('./ComicKings.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --jma-red: #FF3B30;
+  --jma-orange: #FF9500;
+  --jma-yellow: #FFCC00;
+  --jma-green: #4CD964;
+  --jma-teal: #34A853;
+  --jma-blue: #4285F4;
+  --jma-purple: #AF52DE;
+  --jma-pink: #FF2D55;
+  --jma-bg: #E0F7FA;
+  --jma-dark: #0A2540;
+  --font-display: 'Fredoka', cursive;
+  --font-body: 'Fredoka', cursive;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* ---- SubMenu tile "pop" animations ---- */
+/* Slow Ken Burns drift on card background scenes. Livelier version: a
+   visible ~10% scale swell + noticeable pan so the world feels alive
+   without being distracting. */
+@keyframes submenuKenBurns {
+  0%   { transform: scale(1.04) translate(0, 0); }
+  50%  { transform: scale(1.14) translate(-2.2%, -1.4%); }
+  100% { transform: scale(1.04) translate(0, 0); }
+}
+/* Diagonal light sheen sweeping across each tile, with a pause between passes. */
+@keyframes submenuSheen {
+  0%, 30%   { transform: skewX(-18deg) translateX(-160%); opacity: 0; }
+  36%       { opacity: 0.55; }
+  62%       { opacity: 0.55; }
+  70%, 100% { transform: skewX(-18deg) translateX(420%); opacity: 0; }
+}
+/* Single sparkle floating up from the bottom of the card in the tile's accent color. */
+@keyframes submenuSparkle {
+  0%   { transform: translate(-50%, 0) scale(0.6); opacity: 0; }
+  15%  { opacity: 0.95; }
+  85%  { transform: translate(-50%, -220%) scale(0.5); opacity: 0.55; }
+  100% { transform: translate(-50%, -260%) scale(0.4); opacity: 0; }
+}
+
+/* ---- Per-tile decoration layers ---- */
+/* Stylized winding staff — gentle undulating sway that ping-pongs, so
+   no teleport is ever visible. Paired with the SVG wavy paths in the
+   `staff` case of TileDecoration.js. */
+@keyframes tile-staff-sway {
+  0%, 100% { transform: translateX(0)    scaleY(1);    }
+  50%      { transform: translateX(-6px) scaleY(1.03); }
+}
+/* Marching notes along the winding staff — animates SVG dash offset for
+   a smooth flow that loops without a visible snap. */
+@keyframes tile-staff-flow {
+  0%   { stroke-dashoffset: 0;   }
+  100% { stroke-dashoffset: -60; }
+}
+@keyframes tile-note-bob {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50%      { transform: translateY(-6px) rotate(4deg); }
+}
+/* Clouds drifting across (Fun Facts window). Slow, gentle drift that
+   fades out early so the crop's overflow-clip never shows a hard edge
+   near the wooden window frame. */
+@keyframes tile-cloud-drift {
+  0%   { transform: translateX(-160%); opacity: 0; }
+  12%  {                               opacity: 0; }
+  25%  {                               opacity: 1; }
+  55%  {                               opacity: 1; }
+  75%  { opacity: 0; }
+  100% { transform: translateX(160%);  opacity: 0; }
+}
+/* Tumbling music note — rises + rotates + fades (used by the crazy
+   note storm on the Name That Note tile). */
+@keyframes tile-note-tumble {
+  0%   { transform: translateY(0)     rotate(-30deg); opacity: 0; }
+  10%  { opacity: 0.95; }
+  85%  { opacity: 0.7; }
+  100% { transform: translateY(-170px) rotate(320deg); opacity: 0; }
+}
+/* Music notes rising (Jam Session, Jukebox). */
+@keyframes tile-note-rise {
+  0%   { transform: translateY(0)     rotate(-8deg); opacity: 0; }
+  10%  { opacity: 0.9; }
+  90%  { opacity: 0.7; }
+  100% { transform: translateY(-140px) rotate(8deg); opacity: 0; }
+}
+/* Twinkling sparkles (Detective, Robot Boogie, Beat Lab). */
+@keyframes tile-twinkle {
+  0%, 100% { transform: scale(0.4); opacity: 0.25; }
+  50%      { transform: scale(1);   opacity: 1;    }
+}
+/* Cartoon sun subtle wobble — the user's sun has a face, so it can't
+   fully spin; instead it rocks gently side to side. */
+@keyframes tile-sun-spin {
+  0%,  100% { transform: rotate(-8deg); }
+  50%       { transform: rotate(8deg);  }
+}
+
+/* Comic-strip explainer — chunky "MISSIONS?" arcade button gently
+   bobs to invite a tap. */
+@keyframes missions-btn-bob {
+  0%, 100% { transform: translateY(0)    rotate(-2deg); }
+  50%      { transform: translateY(-4px) rotate(2deg);  }
+}
+
+/* POW! starburst that pops when the comic panel switches. */
+@keyframes pow-burst {
+  0%   { transform: translate(-50%, -50%) scale(0.2) rotate(-20deg); opacity: 0; }
+  40%  { transform: translate(-50%, -50%) scale(1.15) rotate(8deg);  opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1.6) rotate(20deg);  opacity: 0; }
+}
+
+/* Halftone dot pattern used inside comic panels — the classic
+   Ben-Day dot look. */
+.jma-halftone {
+  background-image: radial-gradient(circle, rgba(10,37,64,0.10) 1.2px, transparent 1.6px);
+  background-size: 10px 10px;
+}
+/* Sweeping spotlight cone (Music 101 curtain). */
+@keyframes tile-spotlight-sweep {
+  0%,  100% { transform: rotate(-14deg); }
+  50%       { transform: rotate(14deg);  }
+}
+/* JMAtv logo cycle — 6 synced beats where the FRAME hue and the LETTER
+   color always sit on opposite sides of the color wheel (complementary
+   pairs). Same 12s duration on both keyframes so the pairings hold at
+   every rest position.
+     Beat 1 — yellow harp (hue-rotate 0) ↔ blue letters
+     Beat 2 — green harp   (hue-rotate 60) ↔ magenta letters
+     Beat 3 — cyan harp    (hue-rotate 120) ↔ red letters
+     Beat 4 — blue harp    (hue-rotate 180) ↔ yellow letters
+     Beat 5 — magenta harp (hue-rotate 240) ↔ green letters
+     Beat 6 — red harp     (hue-rotate 300) ↔ cyan letters */
+/* JMAtv logo color cycle — 8 stops on a 12s loop with narrow ~1%
+   transition windows so each color "snaps" between beats and holds
+   ~1.38s before flipping. Letter colors are the user-picked palette;
+   frame hue-rotate is offset 45° per step so it lands COMPLEMENTARY
+   to the letter color of the same beat. Glow tint follows the letter
+   color per beat. */
+@keyframes jmatv-color-cycle {
+  0%,   11.5% { filter: hue-rotate(0deg)   drop-shadow(0 0 22px rgba(0,18,255,0.55));    }
+  12.5%, 24%  { filter: hue-rotate(45deg)  drop-shadow(0 0 22px rgba(255,0,0,0.55));     }
+  25%,  36.5% { filter: hue-rotate(90deg)  drop-shadow(0 0 22px rgba(239,49,155,0.55));  }
+  37.5%, 49%  { filter: hue-rotate(135deg) drop-shadow(0 0 22px rgba(255,240,0,0.55));   }
+  50%,  61.5% { filter: hue-rotate(180deg) drop-shadow(0 0 22px rgba(255,255,255,0.65)); }
+  62.5%, 74%  { filter: hue-rotate(225deg) drop-shadow(0 0 22px rgba(79,194,225,0.55));  }
+  75%,  86.5% { filter: hue-rotate(270deg) drop-shadow(0 0 22px rgba(80,200,120,0.55));  }
+  87.5%, 99%  { filter: hue-rotate(315deg) drop-shadow(0 0 22px rgba(138,43,226,0.55));  }
+  100%        { filter: hue-rotate(360deg) drop-shadow(0 0 22px rgba(0,18,255,0.55));    }
+}
+.jmatv-color-cycle {
+  animation: jmatv-color-cycle 12s ease-in-out infinite;
+}
+
+/* Satellite signal waves — cycle small-only → both → none → repeat so
+   the little cartoon satellite feels like it's actually broadcasting.
+   Two separate keyframes offset in time; both share the same 1.5s
+   period. See <SatelliteFlyby /> paths. */
+@keyframes sat-wave-small {
+  0%, 66%   { opacity: 1; }
+  67%, 100% { opacity: 0; }
+}
+@keyframes sat-wave-big {
+  0%, 32%   { opacity: 0; }
+  33%, 66%  { opacity: 1; }
+  67%, 100% { opacity: 0; }
+}
+/* JMAtv letters cycle — three-color loop (red · blue · white). Harp
+   deliberately stays yellow (its native PNG color) so the frame keeps
+   its identity. Timing: 9s total, three ~2.9s holds, ~120ms snaps. */
+@keyframes jmatv-letter-cycle {
+  0%,   32%    { background-color: #FF0000; }
+  33.5%, 65.5% { background-color: #4285F4; }
+  67%,  99%    { background-color: #FFFFFF; }
+  100%         { background-color: #FF0000; }
+}
+.jmatv-letters-mask {
+  /* mask-image is applied via inline style in JS with
+     process.env.PUBLIC_URL so the CRA css-loader doesn't try to
+     resolve /assets/... as a JS module at build time. */
+  -webkit-mask-size: contain;
+          mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+          mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+          mask-position: center;
+  animation: jmatv-letter-cycle 9s ease-in-out infinite;
+}
+/* "Streaming Now" red dot pulse — used inside RetroTV under the CRT.
+   Kept global so we don't ship a local <style> block per component. */
+@keyframes jma-pulse {
+  0%, 100% { transform: scale(1);   opacity: 1; }
+  50%      { transform: scale(1.3); opacity: 0.7; }
+}
+/* Deep-space starfield twinkle — softer, slower, off-phase from the
+   main jma-pulse so the sky feels alive when nothing's flying by. */
+@keyframes jma-star-twinkle-a {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 1;    }
+}
+@keyframes jma-star-twinkle-b {
+  0%, 100% { opacity: 1;    }
+  50%      { opacity: 0.25; }
+}
+/* ---- Home page underwater backdrop ---- */
+.home-underwater-bg-layer {
+  background-size: cover;
+  background-position: center bottom;
+  background-repeat: no-repeat;
+  animation: home-underwater-drift 32s ease-in-out infinite;
+  will-change: transform;
+}
+@keyframes home-underwater-drift {
+  0%, 100% { transform: scale(1.04) translate(0%, 0%); }
+  50%      { transform: scale(1.12) translate(-1.8%, -1%); }
+}
+.home-underwater-shafts {
+  background: repeating-linear-gradient(
+    115deg,
+    transparent 0px, transparent 90px,
+    rgba(190,225,255,0.10) 92px, rgba(190,225,255,0.10) 130px,
+    transparent 132px, transparent 220px
+  );
+  mix-blend-mode: screen;
+}
+@keyframes home-bubble-rise {
+  0%   { transform: translateY(0) scale(0.5); opacity: 0; }
+  8%   { opacity: 0.75; }
+  90%  { opacity: 0.45; }
+  100% { transform: translateY(-110vh) scale(1.2); opacity: 0; }
+}
+.home-underwater-bubble {
+  position: absolute;
+  bottom: -40px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%,
+    rgba(255,255,255,0.9) 0%, rgba(200,230,255,0.55) 40%,
+    rgba(180,220,255,0.15) 70%, transparent 90%);
+  /* Cartoon dark outline matches the rest of the JMA artwork
+     (every character/card has a chunky JMA-dark stroke). */
+  border: 2px solid var(--jma-dark);
+  box-shadow:
+    inset 0 0 4px rgba(255,255,255,0.6),
+    0 1px 0 rgba(10,37,64,0.3);
+  animation: home-bubble-rise linear infinite;
+  will-change: transform, opacity;
+}
+/* ---- /SubMenu tile animations ---- */
+
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--jma-bg);
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-body {
+  font-family: var(--font-body);
+}
+
+.sunburst-bg {
+  background: repeating-conic-gradient(from 0deg, #87CEEB 0deg 10deg, #E0F7FA 10deg 20deg);
+}
+
+.sunburst-warm {
+  background: repeating-conic-gradient(from 0deg, #FFE5B4 0deg 10deg, #FFF8E7 10deg 20deg);
+}
+
+.sunburst-cool {
+  background: repeating-conic-gradient(from 0deg, #B4E5FF 0deg 10deg, #E7F8FF 10deg 20deg);
+}
+
+.sunburst-purple {
+  background: repeating-conic-gradient(from 0deg, #E8D5F5 0deg 10deg, #F5EEFA 10deg 20deg);
+}
+
+.chunky-btn {
+  border: 4px solid var(--jma-dark);
+  border-radius: 9999px;
+  box-shadow: 0 3px 0 0 var(--jma-dark);
+  transition: all 0.15s ease;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+.chunky-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 0 0 var(--jma-dark);
+}
+
+.chunky-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 0 var(--jma-dark);
+}
+
+.game-card {
+  background: white;
+  border: 4px solid var(--jma-dark);
+  border-radius: 24px;
+  box-shadow: 0 8px 0 0 var(--jma-dark);
+}
+
+.instrument-frame-pressed {
+  display: none;
+  transform-origin: center center;
+}
+
+/* Stew frame-cycle pattern — same approach as the drum kit:
+   Default visibility lives in CSS (not inline JSX style), so React
+   reconciliation never overwrites the imperative `style.display` overrides
+   that drive the animation. Frame 0 (neutral) is visible by default; all
+   other frames sit hidden until showStewFrame() flips them. */
+.stew-frame {
+  display: none;
+}
+.stew-frame-default {
+  display: block;
+}
+
+/* Same pattern for the Boom Garden StewDrummer (8 frames: 4 left + 4 right).
+   Frame 0 (left neutral) is the shared default pose visible at idle. */
+.stew-drum-frame {
+  display: none;
+}
+.stew-drum-frame-default {
+  display: block;
+}
+
+.bell-instrument {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(255, 204, 0, 0.6); transform: scale(1); }
+  50% { box-shadow: 0 0 40px rgba(255, 204, 0, 0.9); transform: scale(1.05); }
+}
+
+.bell-highlight {
+  animation: pulseGlow 0.5s ease-in-out;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+.floating {
+  animation: float 3s ease-in-out infinite;
+}
+
+.level-card {
+  background: white;
+  border: 4px solid var(--jma-dark);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 6px 0 0 var(--jma-dark);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.level-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 0 0 var(--jma-dark);
+}
+
+.level-card:active {
+  transform: translateY(2px);
+  box-shadow: 0 4px 0 0 var(--jma-dark);
+}
+
+.bell-row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 16px;
+  flex-wrap: nowrap;
+}
+
+@media (min-width: 768px) {
+  .bell-row {
+    gap: 10px;
+    padding: 20px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .bell-row {
+    gap: 16px;
+    padding: 24px;
+  }
+}
+
+.bell-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.bell-note-label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--jma-dark);
+  text-transform: uppercase;
+}
+
+@media (min-width: 768px) {
+  .bell-note-label { font-size: 18px; }
+}
+
+.rhythm-lanes {
+  display: flex;
+  position: relative;
+  width: 100%;
+  min-height: 600px;
+  background: linear-gradient(to bottom, #f0f9ff 0%, #e0f7fa 100%);
+}
+
+.rhythm-lane {
+  flex: 1;
+  position: relative;
+  border-left: 2px solid rgba(10, 37, 64, 0.2);
+  border-right: 2px solid rgba(10, 37, 64, 0.2);
+}
+
+.rhythm-lane:first-child { border-left: none; }
+.rhythm-lane:last-child { border-right: none; }
+
+.lane-target {
+  position: absolute;
+  bottom: 60px;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.5) 50%, transparent 100%);
+  border-top: 3px dashed var(--jma-dark);
+  border-bottom: 3px dashed var(--jma-dark);
+  pointer-events: none;
+}
+
+/* On mobile we raised the target bell to bottom:96px so it isn't jammed at
+   the bottom edge — move the dashed catch-zone band up with it so the bell
+   sits inside the band visually. */
+@media (max-width: 767px) {
+  .lane-target {
+    bottom: 100px;
+  }
+}
+
+.note-block {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  border: 3px solid var(--jma-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 0 0 var(--jma-dark);
+}
+
+@media (min-width: 768px) {
+  .note-block { width: 60px; height: 60px; font-size: 20px; }
+}
+
+/* Tap-now! halo on a falling bell. The bell PNG already has its own colors,
+   so this halo sits BEHIND it and pulses gold to scream "tap this now!" only
+   during the hit window. `--glow-delay` and `--glow-duration` are set per-note
+   from JS so the halo lights up at ~78% of the fall and fades around ~95%. */
+@keyframes bell-tap-now {
+  0%   { opacity: 0; transform: scale(0.85); }
+  18%  { opacity: 1; transform: scale(1.18); }
+  82%  { opacity: 1; transform: scale(1.18); }
+  100% { opacity: 0; transform: scale(0.95); }
+}
+.bell-tap-now-halo {
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 236, 93, 0.85) 0%, rgba(255, 200, 0, 0.55) 38%, rgba(255, 200, 0, 0) 70%);
+  pointer-events: none;
+  opacity: 0;
+  z-index: -1;
+  animation-name: bell-tap-now;
+  animation-duration: var(--glow-duration, 600ms);
+  animation-delay: var(--glow-delay, 0ms);
+  animation-timing-function: ease-in-out;
+  animation-fill-mode: forwards;
+  will-change: opacity, transform;
+}
+
+/* Lock-in flash on the static target bell when a PERFECT hit lands. A bright
+   gold ring expands outward + the bell briefly pops, so the kid feels the
+   falling bell "click" onto the target. Triggered by adding the
+   `.bell-lock-in-active` class via JS for ~320ms, then removed. */
+@keyframes bell-lock-in-ring {
+  0%   { opacity: 1; transform: scale(0.6); border-width: 6px; }
+  60%  { opacity: 0.9; transform: scale(1.45); border-width: 4px; }
+  100% { opacity: 0; transform: scale(1.85); border-width: 0; }
+}
+@keyframes bell-lock-in-pop {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+.bell-lock-in {
+  border-radius: 50%;
+  border: 6px solid rgba(255, 215, 0, 0);
+  opacity: 0;
+  z-index: 5;
+}
+.bell-lock-in-active {
+  animation: bell-lock-in-ring 320ms ease-out forwards;
+  border-color: rgba(255, 215, 0, 1);
+  box-shadow: 0 0 24px 6px rgba(255, 215, 0, 0.65);
+}
+/* When the lock-in ring fires, also pop the bell beside it. Targets the
+   <img.instrument-frame-idle> sibling that follows the .bell-lock-in div. */
+.bell-lock-in-active ~ .instrument-frame-idle {
+  animation: bell-lock-in-pop 320ms ease-out;
+}
+
+.progress-bar-container {
+  background: #e0e0e0;
+  border: 3px solid var(--jma-dark);
+  border-radius: 999px;
+  height: 24px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+/* Loop studio grid — MPC-style pad matrix. Chunky bevel, inset shadow,
+   emissive glow when a pad is active or being played. Sits on a dark
+   panel so the colored pads pop. */
+.loop-grid-cell {
+  border: 2px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.08s ease, box-shadow 0.12s ease, background 0.12s ease;
+  box-shadow:
+    inset 0 -2px 0 rgba(0, 0, 0, 0.4),
+    inset 0 2px 0 rgba(255, 255, 255, 0.05);
+}
+
+.loop-grid-cell:hover {
+  transform: scale(1.08);
+}
+
+.loop-grid-cell.active {
+  border-color: #000;
+  box-shadow:
+    inset 0 -3px 0 rgba(0, 0, 0, 0.5),
+    inset 0 2px 0 rgba(255, 255, 255, 0.35),
+    0 0 8px currentColor;
+}
+
+.loop-grid-cell.playing {
+  transform: scale(1.08);
+  box-shadow:
+    0 0 18px rgba(255, 204, 0, 0.9),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.4),
+    inset 0 2px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* Streak fire */
+.streak-fire {
+  color: #FF9500;
+  text-shadow: 0 0 10px rgba(255, 149, 0, 0.5);
+}
+
+@media (max-width: 768px) {
+  .chunky-btn { min-height: 56px; min-width: 56px; }
+}
+
+/* Ultrawide screen support */
+@media (min-aspect-ratio: 21/9) {
+  .game-board, .game-card { max-width: 900px; }
+  .bell-row { max-width: 900px; margin: 0 auto; }
+}
+
+:fullscreen { background: var(--jma-bg); }
+:fullscreen .min-h-screen { min-height: 100vh; min-height: 100dvh; }
+
+@media (hover: none) and (pointer: coarse) {
+  .chunky-btn { min-height: 48px; min-width: 48px; }
+}
+
+@layer base {
+  :root {
+    --background: 187 71% 92%;
+    --foreground: 212 69% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 212 69% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 212 69% 15%;
+    --primary: 4 100% 59%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 45 100% 50%;
+    --secondary-foreground: 212 69% 15%;
+    --muted: 187 71% 85%;
+    --muted-foreground: 212 50% 40%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 4 100% 59%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 212 69% 15%;
+    --input: 212 69% 15%;
+    --ring: 217 91% 60%;
+    --radius: 1rem;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground; }
+}
+
+/* =====================================================================
+   PRINT — only the .jma-print-report block prints. Everything else is
+   hidden so a teacher can "Print" a one-page student progress report.
+   ===================================================================== */
+@media print {
+  @page { size: letter; margin: 0.5in; }
+  html, body { background: white !important; color: black !important; }
+  body * { visibility: hidden !important; }
+  .jma-print-report, .jma-print-report * { visibility: visible !important; }
+  .jma-print-report {
+    position: absolute !important;
+    inset: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+  }
+  .jma-print-report .no-print { display: none !important; }
+}
+
+/* ============================================================
+   App-wide retro scrollbar
+   ------------------------------------------------------------
+   Chunky cartoon-glossy scrollbar that mirrors the JMAtv
+   "Up Next" carousel pattern but uses the JMA-yellow + JMA-dark
+   palette as the default. Surfaces that want their own accent
+   (JMAtv channel pages) override via CSS vars on the scroller.
+
+   Applies to BOTH axes and EVERY scrollable element by default,
+   so the Sticker Book grid, Loop Studio track strip, the page
+   itself, etc all read with the same playful finish instead of
+   the default OS grey. Custom-styled scrollers (.jmatv-upnext-
+   scroller) keep their bespoke styling because their rules are
+   declared after this block via the inline <style> on the
+   relevant page.
+   ============================================================ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--jma-yellow) rgba(10, 37, 64, 0.18);
+}
+*::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+*::-webkit-scrollbar-track {
+  background:
+    linear-gradient(180deg, rgba(10,37,64,0.35), rgba(10,37,64,0.15)),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0 2px, transparent 2px 5px);
+  border-radius: 999px;
+  border: 1.5px solid rgba(10,37,64,0.22);
+}
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--jma-yellow), #E5A600);
+  border-radius: 999px;
+  border: 2px solid var(--jma-dark);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.5),
+    inset 0 -2px 0 rgba(0,0,0,0.22);
+}
+
+/* Robot Boogie — Jazzy's dance wobble.
+   framer-motion's keyframe animate + `repeat: Infinity` refuses to loop
+   when the parent is an <AnimatePresence layout /> wrapper (transform
+   fights). Plain CSS animation is bulletproof here. */
+@keyframes jazzyWobble {
+  0%   { transform: rotate(-5deg) translateY(0); }
+  50%  { transform: rotate(5deg)  translateY(-8px); }
+  100% { transform: rotate(-5deg) translateY(0); }
+}
+
+/* Robot Boogie: Time Machine steam puff — a small blob that rises and
+   fades from the machine's top vent each time a character is zapped.
+   Purely decorative. Composited with mix-blend: screen upstream so the
+   dark warm halo doesn't darken through it. */
+@keyframes robotBoogiePuff {
+  0%   { transform: translate(-50%, 0)     scale(0.6); opacity: 0.0; }
+  15%  { opacity: 0.95; }
+  100% { transform: translate(-50%, -180%) scale(1.6); opacity: 0.0; }
+}
+
+/* Robot Boogie: confetti dot on boop. Each dot gets unique --dx/--dy/
+   --rot CSS variables from JS so one keyframe animates every dot along
+   its own trajectory. */
+@keyframes confettiFly {
+  0%   { transform: translate(-50%, -50%)                    rotate(0);       opacity: 0;   }
+  10%  {                                                                       opacity: 1;   }
+  100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--rot)); opacity: 0;   }
+}
+
+/* Robot Boogie speed slider — kid-friendly chunky track + thumb that
+   sits in the JMA style (thick black stroke, flat fills, dark accent). */
+.rb-speed-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 120px;
+  height: 12px;
+  background: #FFF3A6;
+  border: 2px solid var(--jma-dark);
+  border-radius: 999px;
+  outline: none;
+  cursor: pointer;
+}
+.rb-speed-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #FF3B30;
+  border: 2px solid var(--jma-dark);
+  box-shadow: 0 2px 0 0 var(--jma-dark);
+  cursor: grab;
+}
+.rb-speed-slider::-webkit-slider-thumb:active { cursor: grabbing; }
+.rb-speed-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #FF3B30;
+  border: 2px solid var(--jma-dark);
+  box-shadow: 0 2px 0 0 var(--jma-dark);
+  cursor: grab;
+}
+
+/* Robot Boogie: kill browser default focus rectangle on the tappable
+   character buttons. User specifically didn't want the momentary box
+   that appears on release. Global rule so it also catches the
+   `::-moz-focus-inner` dotted outline in Firefox and any browser
+   focus ring on newly-mounted top-band CharacterSlots. */
+[data-testid^="robot-boogie-char-"]:focus,
+[data-testid^="robot-boogie-char-"]:focus-visible,
+[data-testid="robot-boogie-time-machine"]:focus,
+[data-testid="robot-boogie-time-machine"]:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+[data-testid^="robot-boogie-char-"]::-moz-focus-inner,
+[data-testid="robot-boogie-time-machine"]::-moz-focus-inner {
+  border: 0 !important;
+  padding: 0 !important;
+}
+
+/* Robot Boogie backgrounds — subtle motion for the Deep Navy stars,
+   Time-Machine Lab panels, and Retro Arcade spotlights + bulbs. */
+@keyframes jmaBgTwinkle {
+  0%,100% { opacity: 0.4; }
+  50%     { opacity: 1;   }
+}
+@keyframes jmaBgDriftRight {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(60px); }
+}
+@keyframes jmaBgDriftLeft {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-40px); }
+}
+@keyframes jmaBgPanelPulse {
+  0%,100% { opacity: 0.35; }
+  50%     { opacity: 0.85; }
+}
+@keyframes jmaBgBulbBlink {
+  0%,100% { fill: #ffe066; opacity: 1;    }
+  50%     { fill: #ff3aa8; opacity: 0.55; }
+}
+@keyframes jmaBgSpotSwayLeft {
+  0%,100% { transform: rotate(-6deg); }
+  50%     { transform: rotate(10deg); }
+}
+@keyframes jmaBgSpotSwayRight {
+  0%,100% { transform: rotate(6deg);  }
+  50%     { transform: rotate(-10deg); }
+}
+
+/* Jelly Jukebox: cycling tile-floor animation. Three floor color-swap
+   layers cross-fade so the disco floor pulses on-beat. Each layer runs
+   the same keyframe with a staggered delay so they take turns being
+   visible; the brief overlap between beats reads as a smooth color
+   shift. */
+@keyframes jjFloorCycle {
+  0%,   28% { opacity: 1; }
+  33%,  95% { opacity: 0; }
+  100%      { opacity: 1; }
+}
+
+*::-webkit-scrollbar-thumb:hover  { filter: brightness(1.12); }
+*::-webkit-scrollbar-thumb:active { filter: brightness(0.94); }
+*::-webkit-scrollbar-corner       { background: transparent; }
+
+.jma-safe-center {
+  justify-content: safe center;
+}
