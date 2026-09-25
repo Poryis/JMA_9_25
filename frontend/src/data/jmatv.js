@@ -47,18 +47,6 @@ export const JMATV_CHANNELS = [
     ],
   },
   {
-    id: 'music-lessons',
-    title: 'MUSIC LESSONS',
-    tagline: 'Bite-size lessons — new episodes coming soon!',
-    color: '#34C759',
-    accent: '#1F7A38',
-    icon: 'assets/characters/charlie-grad.png',
-    badgeBg: '#D6F3DE',
-    // Placeholder channel — user will drop Vimeo IDs. Empty array is
-    // safe: pickFeaturedEpisode / channel page both gracefully handle it.
-    episodes: [],
-  },
-  {
     id: 'puns-finn-danger',
     title: 'PUNS WITH FINN DANGER',
     tagline: 'Groan-worthy zingers from your favorite cellist',

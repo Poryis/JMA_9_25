@@ -11,18 +11,17 @@ import RetroTVIcon from './RetroTVIcon';
 // the JMA world. Deliberately not a plain <h1> anymore because kids
 // were reading the old white-with-drop-shadow title as a placeholder.
 function MarqueeTitle({ text }) {
-  // Replaces the old arcade-plate title (yellow gradient + red corner
-  // rivets + 4-way stroked text shadow) with the "Pick Your Jam" pill:
-  // solid black rounded pill, chunky navy border + drop shadow, white
-  // sans-caps text. No text-shadow — iOS was rendering the stacked
-  // shadows unreliably. Applies globally to every GameHeader across
-  // the app.
+  // Solid black rounded pill, chunky YELLOW border, navy drop shadow,
+  // white sans-caps text. No text-shadow — iOS was rendering the stacked
+  // shadows unreliably. Applies globally to every GameHeader across the
+  // app. Yellow border matches the "Pick Your Jam" tile-title language
+  // so the game headers feel like they belong to the same visual world.
   return (
     <div
       className="inline-flex items-center justify-center px-4 md:px-6 py-1.5 md:py-2 rounded-full"
       style={{
         background: '#000000',
-        border: '3px solid var(--jma-dark)',
+        border: '4px solid var(--jma-yellow)',
         boxShadow: '0 4px 0 0 var(--jma-dark)',
       }}
     >

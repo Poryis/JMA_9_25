@@ -154,7 +154,7 @@ function LessonsTile({ index, onClick }) {
           antenna={LESSONS_STYLE.antenna}
         />
       </div>
-      <Nameplate title="LESSONS" chip="Music 101" chipColor="#34A853" />
+      <Nameplate title="MUSIC LESSONS" chip="Music 101" chipColor="#34A853" />
     </motion.button>
   );
 }
@@ -204,21 +204,33 @@ export default function JMAtvHomePage() {
           spans 2 cols. Top row fills cols 1-2 / 3-4 / 5-6. Bottom row
           is offset to cols 2-3 / 4-5 so it centers under the top row
           while every TV stays the same size. Falls back to a normal
-          1/2-col stack on smaller screens. */}
+          1/2-col stack on smaller screens.
+
+          Tile order: [Music Videos, Music Lessons, Puns w/ Finn]
+          across the top; [Fun Facts, Variety Show] centered below.
+          Lessons is a special outbound tile (jumps to /lessons), the
+          rest are JMATV_CHANNELS in their data-file order. */}
       <div className="relative z-10 w-full max-w-5xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-14 sm:gap-10 md:gap-8">
-        {JMATV_CHANNELS.slice(0, 3).map((ch, i) => (
-          <div
-            key={ch.id}
-            className={`lg:col-span-2 ${i === 0 ? 'lg:col-start-1' : i === 1 ? 'lg:col-start-3' : 'lg:col-start-5'}`}
-          >
-            <ChannelTile
-              channel={ch}
-              index={i}
-              onClick={() => navigate(`/jmatv/${ch.id}`)}
-            />
-          </div>
-        ))}
-        {JMATV_CHANNELS.slice(3).map((ch, i) => (
+        {/* Top row: music vids, LESSONS, puns */}
+        <div className="lg:col-span-2 lg:col-start-1">
+          <ChannelTile
+            channel={JMATV_CHANNELS[0]}
+            index={0}
+            onClick={() => navigate(`/jmatv/${JMATV_CHANNELS[0].id}`)}
+          />
+        </div>
+        <div className="lg:col-span-2 lg:col-start-3">
+          <LessonsTile index={1} onClick={() => navigate('/lessons')} />
+        </div>
+        <div className="lg:col-span-2 lg:col-start-5">
+          <ChannelTile
+            channel={JMATV_CHANNELS[1]}
+            index={2}
+            onClick={() => navigate(`/jmatv/${JMATV_CHANNELS[1].id}`)}
+          />
+        </div>
+        {/* Bottom row: fun facts, variety show (centered) */}
+        {JMATV_CHANNELS.slice(2).map((ch, i) => (
           <div key={ch.id} className={`lg:col-span-2 ${i === 0 ? 'lg:col-start-2' : 'lg:col-start-4'}`}>
             <ChannelTile
               channel={ch}
@@ -227,9 +239,6 @@ export default function JMAtvHomePage() {
             />
           </div>
         ))}
-        <div className={`lg:col-span-2 ${JMATV_CHANNELS.length - 3 === 1 ? 'lg:col-start-4' : 'lg:col-start-2'}`}>
-          <LessonsTile index={JMATV_CHANNELS.length} onClick={() => navigate('/lessons')} />
-        </div>
       </div>
     </div>
   );
