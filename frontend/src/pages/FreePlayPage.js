@@ -459,7 +459,7 @@ function JamAlongControls({ jamTrackId, onPick, audioRef, getAudioGraph }) {
   const current = jamSongs.find(s => s.id === jamTrackId);
 
   return (
-    <div className="game-card px-1 py-0.5 md:px-2 md:py-1 relative">
+    <div className="relative">
       {!current ? (
         <button
           data-testid="jam-along-toggle"
@@ -814,7 +814,11 @@ function FreePlayPage() {
             boxShadow: '0 4px 0 0 var(--jma-dark)',
             zIndex: 20,
           }}>
-          <div className="game-card px-1 py-0.5 md:px-2 md:py-1 flex items-center gap-1">
+          {/* Inner wrapper is shadow-free — the outer yellow toolbar
+              already contains everything. Was `.game-card` before, which
+              stacked its own 8px navy shadow underneath and made the
+              pills look like they were leaking out the toolbar's bottom. */}
+          <div className="flex items-center gap-1">
             {INSTRUMENT_TABS.map(tab => (
               <button key={tab.id} data-testid={`sound-mode-${tab.id}`}
                 className={`px-2 py-1 md:px-3 md:py-1.5 rounded-lg text-[10px] md:text-xs font-bold border-2 transition-all touch-manipulation ${activeTab === tab.id ? 'bg-[var(--jma-dark)] text-white border-[var(--jma-dark)]' : 'bg-white border-gray-300'}`}
@@ -834,7 +838,7 @@ function FreePlayPage() {
               and the audio MP3 recorder in lockstep. After stopping, an inline
               panel offers two clear choices: listen back here, or save the
               MP3 to take home. The kid can do both or either. */}
-          <div className="game-card px-1 py-0.5 md:px-2 md:py-1 flex items-center gap-1 flex-wrap">
+          <div className="flex items-center gap-1 flex-wrap">
             {!isRecording && !recorder.isRecording ? (
               <button
                 data-testid="capture-jam-btn"
