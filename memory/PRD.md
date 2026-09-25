@@ -130,7 +130,6 @@ Driven by total stickers earned. Warm, non-competitive.
 - **P0 (deferred, needs go)**: Beat Lab rework — swap instruments to Kick/Snare/Hat/Crash + Stand-up bass + Sax (A minor) + Piano; ditch bells; use `[Rhythm | Melody]` tabs.
 - **P1**: Note Names label toggle audit — verify Solfège / Letters / Both across every mini-game.
 - **P1**: JMAtv inline-modal player on iOS Safari (kill the per-episode "TAP FOR SOUND" tap).
-- **P1**: Rename "Detective Dr. Jellybone" → "Dr. Jellybone" app-wide.
 - **P1**: Replace `HarpIcon.js` SVG with user's custom harp artwork once uploaded → `assets/ui/harp.png`.
 - **P1**: Beat Lab grid-cell memoization — split 96-cell sequencer into memoized rows.
 - **P2**: Beat Lab timer consolidation (merge 7 setTimeout/setInterval calls).
