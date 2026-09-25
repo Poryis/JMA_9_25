@@ -1141,12 +1141,23 @@ export default function RobotBoogiePage() {
   return (
     <div
       data-testid="robot-boogie-page"
-      className="min-h-screen relative overflow-x-hidden flex flex-col"
+      className="relative overflow-hidden flex flex-col"
       style={{
         // Fallback base — the actual scene is drawn as inline SVG by
         // <BgComp /> below so we can keep it consistent with the app's
         // flat-cartoon art style and switch scenes at runtime.
         background: '#050518',
+        // Lock the whole page to the visible viewport so the character
+        // lineup at the bottom never falls off-screen. `100dvh` is the
+        // iOS-safe "dynamic viewport" unit that excludes Safari's
+        // collapsing address bar — 100vh alone would make the layout
+        // exceed the reachable area on iPhone. Fallback to 100vh for
+        // older browsers.
+        height: '100vh',
+        // eslint-disable-next-line no-dupe-keys
+        height: '100dvh',
+        minHeight: '100vh',
+        maxHeight: '100dvh',
       }}
     >
       {/* Background scene (flat SVG, matches app art style) */}
@@ -1236,9 +1247,14 @@ export default function RobotBoogiePage() {
           Three vertically stacked zones — active band up top, Time
           Machine in the middle, tappable lineup at the bottom. All
           three sit inside a max-width column so the composition stays
-          coherent on ultra-wide screens. */}
+          coherent on ultra-wide screens.
+
+          `min-h-0` is critical: it lets this flex-1 child actually
+          shrink INSIDE the height-locked outer page. Without it, the
+          child clings to its natural content size and pushes the
+          lineup off-screen on shorter phones. */}
       <div ref={stageRef}
-           className="relative z-10 flex-1 flex flex-col items-center w-full mx-auto px-2 md:px-4 pb-2"
+           className="relative z-10 flex-1 min-h-0 flex flex-col items-center w-full mx-auto px-2 md:px-4 pb-2"
            style={{ maxWidth: '1200px' }}>
 
         {/* Lightning bolts — drawn OVER the entire stage from the Time
@@ -1267,18 +1283,18 @@ export default function RobotBoogiePage() {
             handleCharDrag() keep them from wandering too far anyway. */}
         <div
           data-testid="robot-boogie-active-band"
-          className="w-full flex-1 flex flex-wrap items-end justify-center content-center gap-0 pt-2 pb-0"
+          className="w-full flex-1 min-h-0 flex flex-wrap items-end justify-center content-center gap-0 pt-2 pb-0"
           style={{
-            // Short landscape viewports (e.g. phones rotated sideways
-            // ~360px tall) were clipping character feet because the
-            // static 340px reservation left almost no room. Clamp so
-            // the band always keeps at least ~160px, tops out at
-            // ~640px, and gracefully shrinks in between. minHeight
-            // guarantees at least one full character even when
-            // 100vh - 260 goes negative in landscape.
-            minHeight: 'clamp(150px, 30vh, 220px)',
-            maxHeight: 'clamp(200px, calc(100vh - 260px), 640px)',
-            overflow: 'visible',
+            // Active band takes ONLY whatever vertical space is left
+            // after the Time Machine + lineup have claimed theirs
+            // (both are flex-shrink-0 below). `flex-1 min-h-0` lets
+            // this zone shrink freely so the waiting-area lineup at
+            // the bottom is guaranteed to stay on-screen — even on
+            // short phones or landscape orientation.
+            // No hard minHeight — characters gracefully overflow-hide
+            // if the viewport is genuinely too small, but the LINEUP
+            // never disappears. This was the whole point of the fix.
+            overflow: 'hidden',
           }}
         >
           {activeChars.length === 0 ? (
@@ -1376,9 +1392,12 @@ export default function RobotBoogiePage() {
         {/* ---- Time Machine (centerpiece) ----
             Sits on a glowing "dais" — an elliptical stage puck that
             reads as a raised pedestal. Also anchors the SVG lightning
-            bolts that shoot up from the machine "mouth". */}
+            bolts that shoot up from the machine "mouth".
+            `flex-shrink-0` guarantees the machine keeps its natural
+            size no matter how many characters wrap in the active band
+            — it never gets squeezed out of view. */}
         <div
-          className="w-full flex justify-center items-center py-0 relative"
+          className="w-full flex justify-center items-center py-0 relative flex-shrink-0"
           data-testid="robot-boogie-time-machine-zone"
         >
           {/* Pedestal / dais under the machine — an elliptical stage
@@ -1422,8 +1441,11 @@ export default function RobotBoogiePage() {
 
         {/* ---- Character lineup (bottom, always 8) ----
             Sits on a beat-driven "disco floor" — a soft ellipse behind
-            the whole strip that flickers hue on every other beat. */}
-        <div className="relative w-full">
+            the whole strip that flickers hue on every other beat.
+            `flex-shrink-0` guarantees the "waiting area" ALWAYS stays
+            visible at the bottom of the viewport regardless of how
+            many characters are on stage or how tall the viewport is. */}
+        <div className="relative w-full flex-shrink-0">
           <div
             ref={floorTilePulseRef}
             aria-hidden="true"
