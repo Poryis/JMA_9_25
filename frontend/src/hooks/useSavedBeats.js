@@ -25,3 +25,9 @@ export function deleteSavedBeat(id) {
   try { localStorage.setItem(KEY, JSON.stringify(next)); } catch (_) {}
   return next;
 }
+
+export function renameSavedBeat(id, name) {
+  const next = loadSavedBeats().map(b => (b.id === id ? { ...b, name } : b));
+  try { localStorage.setItem(KEY, JSON.stringify(next)); } catch (_) {}
+  return next;
+}

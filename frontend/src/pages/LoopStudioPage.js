@@ -10,7 +10,7 @@ import useAudio from '../hooks/useAudio';
 import useMp3Recorder from '../hooks/useMp3Recorder';
 import usePlayer from '../hooks/usePlayer';
 import { earnSticker, earnAchievement, earnAchievementUpTo } from '../hooks/useStickers';
-import { saveBeat, loadSavedBeats } from '../hooks/useSavedBeats';
+import { saveBeat, loadSavedBeats, renameSavedBeat } from '../hooks/useSavedBeats';
 
 const DEFAULT_BPM = 100;
 
@@ -384,9 +384,12 @@ function LoopStudioPage() {
 
   // REC: start capturing, then auto-play the loop so kids never record silence.
   const [savedBeatName, setSavedBeatName] = useState(null);
+  const [namingBeat, setNamingBeat] = useState(null);
+  const [beatNameInput, setBeatNameInput] = useState('');
   const startRecording = useCallback(() => {
     initAudioContext();
     setSavedBeatName(null);
+    setNamingBeat(null);
     recorder.start();
     if (!isPlaying) startPlayback();
   }, [initAudioContext, recorder, isPlaying, startPlayback]);
@@ -406,9 +409,18 @@ function LoopStudioPage() {
     if (tracks.length === 0) return;
     const n = loadSavedBeats().length + 1;
     const name = `${playerName ? `${playerName}'s ` : ''}Beat ${n}`;
-    saveBeat({ name, bpm, totalSteps: totalStepsRef.current, tracks });
-    setSavedBeatName(name);
+    const beat = saveBeat({ name, bpm, totalSteps: totalStepsRef.current, tracks });
+    setNamingBeat(beat);
+    setBeatNameInput('');
   }, [stopPlayback, recorder, activeTracks, playerName, bpm]);
+
+  const confirmBeatName = useCallback(() => {
+    if (!namingBeat) return;
+    const name = beatNameInput.trim().slice(0, 24) || namingBeat.name;
+    if (name !== namingBeat.name) renameSavedBeat(namingBeat.id, name);
+    setSavedBeatName(name);
+    setNamingBeat(null);
+  }, [namingBeat, beatNameInput]);
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -747,7 +759,33 @@ function LoopStudioPage() {
               {recorder.isProcessing && (
                 <span className="text-[10px] font-bold opacity-70 text-white">Saving...</span>
               )}
-              {savedBeatName && !recorder.isRecording && !recorder.isProcessing && (
+              {namingBeat && !recorder.isRecording && !recorder.isProcessing && (
+                <form
+                  data-testid="beat-name-form"
+                  className="flex items-center gap-1"
+                  onSubmit={(e) => { e.preventDefault(); confirmBeatName(); }}
+                >
+                  <input
+                    data-testid="beat-name-input"
+                    autoFocus
+                    maxLength={24}
+                    value={beatNameInput}
+                    onChange={(e) => setBeatNameInput(e.target.value)}
+                    placeholder={`Name it! (${namingBeat.name})`}
+                    className="px-2 py-1 rounded-lg text-xs font-bold w-36 md:w-44 outline-none"
+                    style={{ background: '#fff', color: '#0A1626', border: '2px solid #FFCC00' }}
+                  />
+                  <button
+                    type="submit"
+                    data-testid="beat-name-save"
+                    className="px-2 py-1 rounded-lg text-xs font-black"
+                    style={{ background: '#FFCC00', color: '#0A1626', border: '2px solid #000', boxShadow: '0 2px 0 rgba(0,0,0,0.55)' }}
+                  >
+                    Save
+                  </button>
+                </form>
+              )}
+              {savedBeatName && !namingBeat && !recorder.isRecording && !recorder.isProcessing && (
                 <span data-testid="loop-saved-to-jam" className="text-[10px] font-black text-[#4CD964] whitespace-nowrap">
                   ✓ {savedBeatName} → Jam Session
                 </span>
