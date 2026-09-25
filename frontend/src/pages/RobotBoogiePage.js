@@ -972,16 +972,14 @@ export default function RobotBoogiePage() {
   const handleCharDrag = useCallback((charId, dx, dy) => {
     setCharTransforms((prev) => {
       const cur = prev[charId] || { x: 0, y: 0, scale: 1 };
-      // Clamp drag so characters can't leave the visible stage area.
-      // Y clamp tightened Feb 2026 (from ±140 → ±60) because the active-
-      // band container isn't tall enough to accommodate a big vertical
-      // drag range — kids were dragging heads or feet outside the band
-      // and getting them visually clipped by neighboring UI. ±60 gives
-      // meaningful "wander" room while keeping the whole character on
-      // the stage. The band's overflow: visible ensures a tiny overshoot
-      // during the drag frame doesn't clip either.
-      const nx = Math.max(-360, Math.min(360, cur.x + dx));
-      const ny = Math.max(-60, Math.min(60, cur.y + dy));
+      // Wide bounds (±400 x, ±350 y) let kids drag characters ANYWHERE
+      // on the stage — including into the Time Machine zone and down
+      // over the waiting lineup. Previously ±60 on Y kept characters
+      // pinned to a thin band near the top and made the middle 20% of
+      // the stage functionally unusable. The outer page has
+      // `overflow: hidden` so characters can't escape the viewport.
+      const nx = Math.max(-400, Math.min(400, cur.x + dx));
+      const ny = Math.max(-350, Math.min(350, cur.y + dy));
       return { ...prev, [charId]: { ...cur, x: nx, y: ny } };
     });
   }, []);
@@ -1201,8 +1199,13 @@ export default function RobotBoogiePage() {
           tall on phones and the pt-14 we had before caused the title,
           reset, and speed slider to visually stack on narrow screens).
           flex-wrap so if a very narrow viewport still can't fit both
-          chips on one line they stack cleanly instead of overlapping. */}
-      <div className="relative z-10 flex items-center justify-center flex-wrap gap-2 md:gap-3 pt-20 md:pt-16 pb-0">
+          chips on one line they stack cleanly instead of overlapping.
+
+          z-30 (was z-10) so the Reset button STAYS TAPPABLE even when
+          a kid has dragged a character up into this area. Previously
+          the stage (z-10, later in DOM) painted characters on top of
+          the reset row and their hit-divs stole the tap. */}
+      <div className="relative z-30 flex items-center justify-center flex-wrap gap-2 md:gap-3 pt-20 md:pt-16 pb-0">
         <button
           type="button"
           data-testid="robot-boogie-reset"
@@ -1343,20 +1346,30 @@ export default function RobotBoogiePage() {
                 // 2×2 wrap doesn't push the Time Machine down into the
                 // bottom lineup on 1280×800.
                 //
+                // n=5-8 rebalanced (per user feedback): force
+                // BALANCED rows instead of "top row dominates". Width
+                // percentages chosen so `flex-wrap` produces:
+                //   n=5 → 3+2  (was: 4+1)
+                //   n=6 → 3+3  (was: 4+2)
+                //   n=7 → 4+3  (was: 6+1)
+                //   n=8 → 4+4  (was: 6+2)
+                // Math: for k-per-row we need `outer × k ≤ container`
+                // and `outer × (k+1) > container` on every viewport.
+                //
                 //   n | widthPct |  maxW | negMarginPx | outer = wrap size
                 //   1 |   55%    | 440px |      0      |   440
                 //   2 |   50%    | 440px |    -30      |   380
                 //   3 |   36%    | 380px |    -25      |   330
                 //   4 |   28%    | 340px |    -22      |   296   (4×296=1184<1200 ✓)
-                //  5-6|   24%    | 260px |    -22      |   216   (3-per-row wrap, height ~347px)
-                //  7-8|   20%    | 220px |    -20      |   180   (4-per-row wrap, height ~293px)
+                //  5-6|   34%    | 340px |    -10      |  ~34%-20  (3 per row on all viewports)
+                //  7-8|   24%    | 260px |    -10      |   240   (4 per row on desktop/tablet)
                 let widthPct, maxW, negPx;
                 if (n === 1)      { widthPct = '55%'; maxW = '440px'; negPx = 0; }
                 else if (n === 2) { widthPct = '50%'; maxW = '440px'; negPx = 30; }
                 else if (n === 3) { widthPct = '36%'; maxW = '380px'; negPx = 25; }
                 else if (n === 4) { widthPct = '28%'; maxW = '340px'; negPx = 22; }
-                else if (n <= 6)  { widthPct = '24%'; maxW = '260px'; negPx = 22; }
-                else               { widthPct = '20%'; maxW = '220px'; negPx = 20; }
+                else if (n <= 6)  { widthPct = '34%'; maxW = '340px'; negPx = 10; }
+                else               { widthPct = '24%'; maxW = '260px'; negPx = 10; }
 
                 return (
                   <motion.div
