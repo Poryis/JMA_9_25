@@ -542,7 +542,7 @@ function FreePlayPage() {
 
   const [particles, setParticles] = useState([]);
   const [streak, setStreak] = useState(0);
-  const [activeTab, setActiveTab] = useState('drums');
+  const [activeTab, setActiveTab] = useState('guitar');
 
   const [isRecording, setIsRecording] = useState(false);
   const [recording, setRecording] = useState([]);

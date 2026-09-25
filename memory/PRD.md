@@ -1,6 +1,8 @@
 # Jelly of the Month Club Music Academy (JMA) — PRD
 
-## Latest (Jun 2026): **Unified STOP while recording** — `togglePlay` now routes to `stopRecording()` whenever `recorder.isRecording`, so the big STOP button (and spacebar) end both the loop and the MP3 recording exactly like the REC-row STOP, including the save + name prompt.
+## Latest (Jun 2026): **Jam Session defaults to Guitar** — `FreePlayPage` `activeTab` initial state is now `'guitar'` (guitar itself already defaults to Notes + Crunch).
+
+## Jun 2026: **Unified STOP while recording** — `togglePlay` now routes to `stopRecording()` whenever `recorder.isRecording`, so the big STOP button (and spacebar) end both the loop and the MP3 recording exactly like the REC-row STOP, including the save + name prompt.
 
 ## Jun 2026: **Name Your Beat** — After STOP in Beat Lab an inline form (`beat-name-input` + `beat-name-save`, autofocus, 24-char max, Enter or Save) appears next to REC with the default name as placeholder; submitting renames the just-saved beat via `renameSavedBeat(id, name)` in `useSavedBeats.js`, blank keeps the default. Then the "✓ <name> → Jam Session" label shows.
 
