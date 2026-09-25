@@ -378,9 +378,6 @@ function LoopStudioPage() {
     }
   }, [bpm, initAudioContext, playStep]);
 
-  const togglePlay = useCallback(() => {
-    if (isPlaying) stopPlayback(); else startPlayback();
-  }, [isPlaying, stopPlayback, startPlayback]);
 
   // REC: start capturing, then auto-play the loop so kids never record silence.
   const [savedBeatName, setSavedBeatName] = useState(null);
@@ -413,6 +410,12 @@ function LoopStudioPage() {
     setNamingBeat(beat);
     setBeatNameInput('');
   }, [stopPlayback, recorder, activeTracks, playerName, bpm]);
+
+  // Big STOP while recording = same as the REC stop (ends loop + recording).
+  const togglePlay = useCallback(() => {
+    if (recorder.isRecording) { stopRecording(); return; }
+    if (isPlaying) stopPlayback(); else startPlayback();
+  }, [recorder.isRecording, stopRecording, isPlaying, stopPlayback, startPlayback]);
 
   const confirmBeatName = useCallback(() => {
     if (!namingBeat) return;
