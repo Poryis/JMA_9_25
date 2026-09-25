@@ -1,88 +1,58 @@
 // Electric Guitar — GarageBand-style dual-mode instrument.
 //
-// Two modes (toggleable at the top of the instrument surface):
-//   • CHORDS — 6 fat chord pads. Tap = strum down. Diatonic chords in
-//     A minor (Am · Dm · Em · G · C · F) so kids can jam any pattern
-//     and it always sounds musical. Every chord is a real 6-string
-//     voicing with slight staggered timing between the strings so it
-//     reads as a strum, not a stab.
-//   • NOTES — a 9-note fretboard strip locked to the A minor
-//     pentatonic scale (the "always sounds cool" scale). Kids can
-//     solo over their own chord loops without ever hitting a wrong
-//     note.
+// **Sound engine (v3): Yamaha MoxF6 "Hard Rock AS1&2"-style analog
+// synth patch.** Kids requested a chunkier, more sustained tone that
+// holds while a key is pressed and decays on release. Sampled real
+// guitars couldn't do that without loop-editing every sample, so we
+// switched to a synth voice modeled after the classic hard-rock lead
+// patch:
 //
-// Tone toggle (Clean / Crunch):
-//   • Clean — real electric-guitar samples routed to master, gentle
-//     6 kHz LP to trim harshness. Reads as jangly Fender clean.
-//   • Crunch — same samples through a hyperbolic WaveShaper (k=100,
-//     tamed) + 3 kHz LP. Reads as bluesy rock lead. Not so hot it
-//     becomes noise.
+//   • Osc 1: Sawtooth at fundamental (main body)
+//   • Osc 2: Sawtooth at fundamental × 1.007 (detune — chorus width)
+//   • Osc 3: Square at fundamental / 2 (sub-octave weight)
+//   • Amp ADSR: A=6ms, D=90ms, S=0.65, R=260ms (snappy attack, held
+//     sustain, musical release tail — matches a real guitarist
+//     letting a note ring and muting on lift-off)
+//   • LP filter with envelope: cutoff opens 1200 → 4500 Hz over 150ms
+//     then settles at 3000 Hz sustain. Q=3.5 gives a subtle "wah"
+//     opening on every attack — the sound of a Cry Baby pedal
+//     locked half-open, which is the hard-rock signature.
+//   • WaveShaper distortion (k=60, tame): sits AFTER the filter so
+//     the filter env modulates distortion, not the other way around.
+//   • Post-gain 0.13 so 6 voices held together (a chord) don't clip.
 //
-// Sound engine: **real sampled electric guitar** (Tone.js instruments
-// pack, MIT-licensed, ~100 KB each). Sparse sample set (A2/3/4/5,
-// C3/4/5, E2, Fs3/4/5) with playbackRate pitch-shifting to fill in
-// the gaps for the chord/note frequencies. For each target freq we
-// pick the nearest sampled note (in semitone distance) and set
-// playbackRate = target/sample. Within ±3 semitones (~±20% rate
-// change) the pitch shift is inaudible — this is the standard
-// "multisample" trick every sampler plug-in uses.
+// Each note is a **persistent voice**. Voice.start() begins the amp
+// + filter envelope. Voice.release() cancels scheduled ramps and
+// gracefully fades to silence over 260ms. Multiple voices can be
+// active simultaneously (polyphony) — the component tracks them by
+// id in `activeVoicesRef` so the UP handler releases the right one.
 //
-// Output routes into the parent's master gain node (via
-// getAudioGraph) so the guitar is captured by the MP3 recorder
-// automatically. Guitar gain sits at 0.18 to match the loudness of
-// the bells / xylo / piano (which peak around 0.5-0.8 at the note
-// gain node but have shorter, less dense attacks — a strum layers
-// 6 voices so we throttle harder).
+// **Modes:**
+//   • CHORDS — 6 pads. Tap = strum + hold: 6 voices with 22 ms
+//     per-string startAt offsets. Release = release all 6 together.
+//   • NOTES — 9 pentatonic pads (A minor pentatonic). Tap = single
+//     voice. Release = release voice.
 //
-// Keyboard bindings:
+// **Tone toggle:**
+//   • Clean — no distortion, LP cutoff 6 kHz sustain, wider filter env
+//   • Crunch — WaveShaper on, LP cutoff 3 kHz sustain, tighter env
+//
+// **Output:** routed to the parent's masterNode via getAudioGraph so
+// the MP3 recorder captures automatically.
+//
+// **Keyboard bindings** (only active while the Guitar tab is mounted,
+// AND the FreePlayPage listener short-circuits on activeTab==='guitar'
+// so bell/xylo/piano keys don't fire in parallel):
 //   • Chords mode: 1 2 3 4 5 6 → Am Dm Em G C F
-//   • Notes  mode: A S D F G H J K L → 9 pentatonic notes (low→high)
-//   • Q / W → Clean / Crunch toggle
-//   • Z / X → Chords / Notes mode toggle
-//
-// All bindings are active only while the Guitar tab is visible
-// (component mounted).
+//   • Notes  mode: A S D F G H J K L → 9 pentatonic notes
+//   • Q / W → Clean / Crunch
+//   • Z / X → Chords / Notes mode
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 
 // ---------------------------------------------------------------
-// Sample manifest — filenames map to their sampled frequencies.
-// Sparse coverage, filled by pitch-shifting. All files live in
-// /public/assets/audio/guitar/ and are ~100 KB MP3.
-// ---------------------------------------------------------------
-const SAMPLE_MAP = [
-  { file: 'A2.mp3',  freq: 110.00 },
-  { file: 'A3.mp3',  freq: 220.00 },
-  { file: 'A4.mp3',  freq: 440.00 },
-  { file: 'A5.mp3',  freq: 880.00 },
-  { file: 'C3.mp3',  freq: 130.81 },
-  { file: 'C4.mp3',  freq: 261.63 },
-  { file: 'C5.mp3',  freq: 523.25 },
-  { file: 'E2.mp3',  freq:  82.41 },
-  { file: 'Fs3.mp3', freq: 185.00 },
-  { file: 'Fs4.mp3', freq: 369.99 },
-  { file: 'Fs5.mp3', freq: 739.99 },
-];
-
-// Pick the nearest sampled frequency to `target`, measured in
-// semitones (log2 space) so a shift of one octave is treated the
-// same up or down. Returns { file, freq }.
-function nearestSample(target) {
-  let best = SAMPLE_MAP[0];
-  let bestDist = Infinity;
-  for (const s of SAMPLE_MAP) {
-    const dist = Math.abs(Math.log2(target / s.freq));
-    if (dist < bestDist) { bestDist = dist; best = s; }
-  }
-  return best;
-}
-
-// ---------------------------------------------------------------
-// Chord voicings — 6-string open-position voicings, A minor
-// diatonic. Frequencies in Hz. Low strings first, high strings
-// last so the default strum order (low → high) reads as a
-// downstroke.
+// Chord voicings — A minor diatonic. Low → high (downstroke feel).
 // ---------------------------------------------------------------
 const CHORDS = [
   { id: 'Am', label: 'Am', roman: 'i',   color: '#E74C3C', key: '1', freqs: [110.00, 164.81, 220.00, 261.63, 329.63, 440.00] },
@@ -93,7 +63,7 @@ const CHORDS = [
   { id: 'F',  label: 'F',  roman: 'VI',  color: '#E67E22', key: '6', freqs: [ 87.31, 130.81, 174.61, 220.00, 261.63, 349.23] },
 ];
 
-// A minor pentatonic — mapped to a natural piano row.
+// A minor pentatonic, mapped to a natural home-row.
 const NOTES = [
   { label: 'A',  freq: 220.00, key: 'a' },
   { label: 'C',  freq: 261.63, key: 's' },
@@ -107,15 +77,14 @@ const NOTES = [
 ];
 
 // ---------------------------------------------------------------
-// Distortion curve — hyperbolic soft clip. Cached (44100 floats
-// is expensive to build per-note).
+// Cached distortion curve — hyperbolic soft-clip.
 // ---------------------------------------------------------------
 let cachedDistortionCurve = null;
 function distortionCurve() {
   if (cachedDistortionCurve) return cachedDistortionCurve;
   const n = 4096;
   const curve = new Float32Array(n);
-  const k = 100; // tamer than the KS version — samples are hotter to start
+  const k = 60; // tame — sits well with sawtooth oscillators
   const deg = Math.PI / 180;
   for (let i = 0; i < n; i++) {
     const x = (i * 2) / n - 1;
@@ -126,87 +95,95 @@ function distortionCurve() {
 }
 
 // ---------------------------------------------------------------
-// Sample buffer cache — decoded once per audio context, reused.
+// Voice — one held note. Detuned saw pair + sub-octave square +
+// filter env + amp env. Distorted / clean swap the signal chain.
 // ---------------------------------------------------------------
-const bufferCache = new Map(); // key: `${ctxId}:${file}` → AudioBuffer
-
-async function loadSample(ctx, file) {
-  // Give the ctx a stable id so we can share the cache across
-  // component remounts (parent's ctx lives for the app's lifetime).
-  if (!ctx._jmaId) ctx._jmaId = String(Math.random());
-  const cacheKey = `${ctx._jmaId}:${file}`;
-  if (bufferCache.has(cacheKey)) return bufferCache.get(cacheKey);
-  const url = `assets/audio/guitar/${file}`;
-  try {
-    const resp = await fetch(url);
-    const buf = await resp.arrayBuffer();
-    const audioBuffer = await ctx.decodeAudioData(buf);
-    bufferCache.set(cacheKey, audioBuffer);
-    return audioBuffer;
-  } catch (err) {
-    console.warn('[guitar] failed to load', file, err);
-    return null;
-  }
-}
-
-// ---------------------------------------------------------------
-// Play one guitar note. Picks the nearest sample, pitch-shifts via
-// playbackRate. Routes through gain → LP filter → (optional
-// distortion) → destination.
-// ---------------------------------------------------------------
-function playSampledNote({ ctx, destination, freq, gain = 0.18, distorted = false, startAt = 0 }) {
-  const s = nearestSample(freq);
-  const buffer = bufferCache.get(`${ctx._jmaId}:${s.file}`);
-  if (!buffer) return; // still loading — silent drop is better than a glitch
-  const src = ctx.createBufferSource();
-  src.buffer = buffer;
-  src.playbackRate.value = freq / s.freq;
-
-  const g = ctx.createGain();
-  // Fast attack, medium release. Samples already have their own
-  // natural pluck envelope so we only shape the tail slightly.
+function makeVoice({ ctx, destination, freq, distorted, startAt = 0, level = 1.0 }) {
   const t0 = ctx.currentTime + startAt;
-  g.gain.setValueAtTime(gain, t0);
-  g.gain.setValueAtTime(gain, t0 + 1.0);
-  g.gain.exponentialRampToValueAtTime(0.001, t0 + 2.2);
 
+  // Oscillators.
+  const osc1 = ctx.createOscillator();
+  osc1.type = 'sawtooth';
+  osc1.frequency.setValueAtTime(freq, t0);
+
+  const osc2 = ctx.createOscillator();
+  osc2.type = 'sawtooth';
+  osc2.frequency.setValueAtTime(freq * 1.007, t0); // ~12 cents up
+
+  const osc3 = ctx.createOscillator();
+  osc3.type = 'square';
+  osc3.frequency.setValueAtTime(freq / 2, t0);
+
+  const oscMix = ctx.createGain();
+  oscMix.gain.value = 1.0;
+  osc1.connect(oscMix);
+  osc2.connect(oscMix);
+  // Sub-octave square is subtle — kept at 40% so it adds weight
+  // without muddying the fundamental.
+  const subGain = ctx.createGain();
+  subGain.gain.value = 0.4;
+  osc3.connect(subGain);
+  subGain.connect(oscMix);
+
+  // Amp envelope.
+  const amp = ctx.createGain();
+  amp.gain.setValueAtTime(0, t0);
+  amp.gain.linearRampToValueAtTime(level, t0 + 0.006);              // A: 6 ms
+  amp.gain.linearRampToValueAtTime(level * 0.65, t0 + 0.006 + 0.09); // D: 90 ms → S: 0.65
+
+  // LP filter with envelope — the "wah" opening.
   const lp = ctx.createBiquadFilter();
   lp.type = 'lowpass';
-  lp.frequency.value = distorted ? 3000 : 6000;
-  lp.Q.value = 0.7;
+  lp.Q.value = 3.5;
+  const sustainCutoff = distorted ? 3000 : 6000;
+  lp.frequency.setValueAtTime(1200, t0);
+  lp.frequency.exponentialRampToValueAtTime(4500, t0 + 0.006 + 0.05);
+  lp.frequency.exponentialRampToValueAtTime(sustainCutoff, t0 + 0.006 + 0.20);
 
-  src.connect(g);
-  g.connect(lp);
+  oscMix.connect(amp);
+  amp.connect(lp);
 
+  // Distortion branch or clean-out.
+  const outGain = ctx.createGain();
+  outGain.gain.value = distorted ? 0.11 : 0.13;
   if (distorted) {
     const shaper = ctx.createWaveShaper();
     shaper.curve = distortionCurve();
     shaper.oversample = '4x';
-    const postGain = ctx.createGain();
-    postGain.gain.value = 0.35; // distortion adds ~9dB of energy — trim it back
     lp.connect(shaper);
-    shaper.connect(postGain);
-    postGain.connect(destination);
+    shaper.connect(outGain);
   } else {
-    lp.connect(destination);
+    lp.connect(outGain);
   }
+  outGain.connect(destination);
 
-  src.start(t0);
-  src.stop(t0 + 2.4);
-}
+  osc1.start(t0);
+  osc2.start(t0);
+  osc3.start(t0);
 
-// Strum a chord — layered notes, 22ms per-string offset.
-function strumChordSampled({ ctx, destination, freqs, distorted = false }) {
-  freqs.forEach((freq, i) => {
-    playSampledNote({
-      ctx,
-      destination,
-      freq,
-      gain: 0.16 - i * 0.008, // low strings marginally louder
-      distorted,
-      startAt: i * 0.022,
-    });
-  });
+  const voice = {
+    ctx,
+    amp,
+    osc1, osc2, osc3,
+    released: false,
+    release() {
+      if (this.released) return;
+      this.released = true;
+      const t = this.ctx.currentTime;
+      const R = 0.26;
+      // Cancel any queued envelope points, hold current value, then
+      // ramp down. Prevents pop from immediate zero and preserves
+      // whatever level the sustain was at.
+      this.amp.gain.cancelScheduledValues(t);
+      const cur = this.amp.gain.value;
+      this.amp.gain.setValueAtTime(cur, t);
+      this.amp.gain.exponentialRampToValueAtTime(0.0001, t + R);
+      this.osc1.stop(t + R + 0.04);
+      this.osc2.stop(t + R + 0.04);
+      this.osc3.stop(t + R + 0.04);
+    },
+  };
+  return voice;
 }
 
 // ---------------------------------------------------------------
@@ -215,85 +192,156 @@ function strumChordSampled({ ctx, destination, freqs, distorted = false }) {
 export default function GuitarInstrument({ getAudioGraph, initAudioContext, onPlay }) {
   const [mode, setMode] = useState('chords'); // 'chords' | 'notes'
   const [tone, setTone] = useState('clean');  // 'clean' | 'crunch'
-  const [samplesReady, setSamplesReady] = useState(false);
+
+  // Latest values for callbacks that live in refs (so we don't
+  // recreate handlers on every toggle and lose active voices).
   const distortedRef = useRef(false);
-  const modeRef = useRef('chords');
   distortedRef.current = tone === 'crunch';
+  const modeRef = useRef('chords');
   modeRef.current = mode;
 
-  // Preload all 11 samples once when the component mounts. Uses the
-  // parent's shared AudioContext (via getAudioGraph) so decoded
-  // buffers persist across tab switches without re-fetching.
-  useEffect(() => {
+  // Track active held voices by their trigger id (chord id or
+  // `note-${idx}` for pentatonic pads). Each entry is an array of
+  // Voice objects (a chord = 6 voices; a note = 1).
+  const activeVoicesRef = useRef(new Map());
+
+  // Flash id for visual "press" feedback — set on down, cleared on
+  // up so the pad stays "pressed" while the note sustains.
+  const [heldIds, setHeldIds] = useState(new Set());
+
+  // -----------------------------------------------------------
+  // Voice lifecycle
+  // -----------------------------------------------------------
+  const startChord = useCallback((chord) => {
     if (initAudioContext) initAudioContext();
     const graph = getAudioGraph && getAudioGraph();
     if (!graph) return;
-    let cancelled = false;
-    (async () => {
-      await Promise.all(SAMPLE_MAP.map(s => loadSample(graph.ctx, s.file)));
-      if (!cancelled) setSamplesReady(true);
-    })();
-    return () => { cancelled = true; };
-  }, [getAudioGraph, initAudioContext]);
+    // If already held (rapid re-press), release previous voices first.
+    const prev = activeVoicesRef.current.get(chord.id);
+    if (prev) prev.forEach(v => v.release());
 
-  // Visual flash for tap feedback.
-  const [flashId, setFlashId] = useState(null);
-  const flashTimeoutRef = useRef(null);
-  const flash = useCallback((id) => {
-    setFlashId(id);
-    if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
-    flashTimeoutRef.current = setTimeout(() => setFlashId(null), 180);
+    const voices = chord.freqs.map((freq, i) =>
+      makeVoice({
+        ctx: graph.ctx,
+        destination: graph.masterNode,
+        freq,
+        distorted: distortedRef.current,
+        startAt: i * 0.022,
+        level: 0.9 - i * 0.03,
+      })
+    );
+    activeVoicesRef.current.set(chord.id, voices);
+    setHeldIds(prev => new Set(prev).add(chord.id));
+    if (onPlay) onPlay({ type: 'guitar-chord', chord: chord.id });
+  }, [initAudioContext, getAudioGraph, onPlay]);
+
+  const stopChord = useCallback((chordId) => {
+    const voices = activeVoicesRef.current.get(chordId);
+    if (voices) {
+      voices.forEach(v => v.release());
+      activeVoicesRef.current.delete(chordId);
+    }
+    setHeldIds(prev => {
+      if (!prev.has(chordId)) return prev;
+      const n = new Set(prev);
+      n.delete(chordId);
+      return n;
+    });
   }, []);
 
-  const strum = useCallback((chord) => {
+  const startNote = useCallback((note, idx) => {
     if (initAudioContext) initAudioContext();
     const graph = getAudioGraph && getAudioGraph();
     if (!graph) return;
-    strumChordSampled({ ctx: graph.ctx, destination: graph.masterNode, freqs: chord.freqs, distorted: distortedRef.current });
-    flash(chord.id);
-    if (onPlay) onPlay({ type: 'guitar-chord', chord: chord.id });
-  }, [initAudioContext, getAudioGraph, flash, onPlay]);
-
-  const pluck = useCallback((note, idx) => {
-    if (initAudioContext) initAudioContext();
-    const graph = getAudioGraph && getAudioGraph();
-    if (!graph) return;
-    playSampledNote({ ctx: graph.ctx, destination: graph.masterNode, freq: note.freq, distorted: distortedRef.current, gain: 0.22 });
-    flash(`note-${idx}`);
+    const id = `note-${idx}`;
+    const prev = activeVoicesRef.current.get(id);
+    if (prev) prev.forEach(v => v.release());
+    const voice = makeVoice({
+      ctx: graph.ctx,
+      destination: graph.masterNode,
+      freq: note.freq,
+      distorted: distortedRef.current,
+      level: 1.0,
+    });
+    activeVoicesRef.current.set(id, [voice]);
+    setHeldIds(prev => new Set(prev).add(id));
     if (onPlay) onPlay({ type: 'guitar-note', note: note.label });
-  }, [initAudioContext, getAudioGraph, flash, onPlay]);
+  }, [initAudioContext, getAudioGraph, onPlay]);
 
-  // Keyboard bindings. 1-6 → chords. A/S/D/F/G/H/J/K/L → pentatonic
-  // notes. Q/W → tone toggle. Z/X → mode toggle. Bindings active
-  // only while this component is mounted (i.e. Guitar tab is on).
+  const stopNote = useCallback((idx) => {
+    const id = `note-${idx}`;
+    const voices = activeVoicesRef.current.get(id);
+    if (voices) {
+      voices.forEach(v => v.release());
+      activeVoicesRef.current.delete(id);
+    }
+    setHeldIds(prev => {
+      if (!prev.has(id)) return prev;
+      const n = new Set(prev);
+      n.delete(id);
+      return n;
+    });
+  }, []);
+
+  // -----------------------------------------------------------
+  // Cleanup on unmount — release every voice.
+  // -----------------------------------------------------------
+  useEffect(() => () => {
+    activeVoicesRef.current.forEach(voices => voices.forEach(v => v.release()));
+    activeVoicesRef.current.clear();
+  }, []);
+
+  // -----------------------------------------------------------
+  // Keyboard bindings. Only fires while this component is mounted.
+  // The FreePlayPage keyboard listener short-circuits on
+  // activeTab==='guitar' so bell/piano keys can't double-fire.
+  // -----------------------------------------------------------
   useEffect(() => {
     const chordByKey = Object.fromEntries(CHORDS.map(c => [c.key, c]));
     const noteByKey = Object.fromEntries(NOTES.map((n, i) => [n.key, { note: n, idx: i }]));
-    const pressed = new Set();
 
     const onKeyDown = (e) => {
+      if (e.repeat) return; // ignore OS auto-repeat while held
       const k = e.key.toLowerCase();
-      if (pressed.has(k)) return;
-      pressed.add(k);
-      // Mode + tone toggles first (work regardless of mode).
+      // Toggles fire regardless of mode.
       if (k === 'q') { setTone('clean'); return; }
       if (k === 'w') { setTone('crunch'); return; }
       if (k === 'z') { setMode('chords'); return; }
       if (k === 'x') { setMode('notes'); return; }
       if (modeRef.current === 'chords' && chordByKey[k]) {
-        strum(chordByKey[k]);
+        startChord(chordByKey[k]);
       } else if (modeRef.current === 'notes' && noteByKey[k]) {
-        pluck(noteByKey[k].note, noteByKey[k].idx);
+        startNote(noteByKey[k].note, noteByKey[k].idx);
       }
     };
-    const onKeyUp = (e) => { pressed.delete(e.key.toLowerCase()); };
+    const onKeyUp = (e) => {
+      const k = e.key.toLowerCase();
+      if (chordByKey[k]) stopChord(chordByKey[k].id);
+      if (noteByKey[k]) stopNote(noteByKey[k].idx);
+    };
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
     return () => {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
-  }, [strum, pluck]);
+  }, [startChord, stopChord, startNote, stopNote]);
+
+  // -----------------------------------------------------------
+  // Pointer handlers for touch/mouse — press to start, release
+  // (up / leave / cancel) to stop.
+  // -----------------------------------------------------------
+  const chordDown = useCallback((chord) => (e) => {
+    e.preventDefault();
+    startChord(chord);
+  }, [startChord]);
+  const chordUp = useCallback((chordId) => () => stopChord(chordId), [stopChord]);
+
+  const noteDown = useCallback((note, idx) => (e) => {
+    e.preventDefault();
+    startNote(note, idx);
+  }, [startNote]);
+  const noteUp = useCallback((idx) => () => stopNote(idx), [stopNote]);
 
   const noteColors = useMemo(() => (
     ['#E74C3C', '#E67E22', '#F1C40F', '#27AE60', '#0FA3B1', '#3498DB', '#5E60CE', '#9B59B6', '#C71585']
@@ -357,23 +405,26 @@ export default function GuitarInstrument({ getAudioGraph, initAudioContext, onPl
           className="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-3"
         >
           {CHORDS.map((chord) => {
-            const active = flashId === chord.id;
+            const held = heldIds.has(chord.id);
             return (
               <motion.button
                 key={chord.id}
                 type="button"
                 data-testid={`guitar-chord-${chord.id}`}
-                onPointerDown={() => strum(chord)}
-                className="relative rounded-2xl flex flex-col items-center justify-center py-4 md:py-6 border-2 touch-manipulation"
+                onPointerDown={chordDown(chord)}
+                onPointerUp={chordUp(chord.id)}
+                onPointerLeave={chordUp(chord.id)}
+                onPointerCancel={chordUp(chord.id)}
+                className="relative rounded-2xl flex flex-col items-center justify-center py-4 md:py-6 border-2 touch-manipulation select-none"
                 style={{
                   background: `linear-gradient(180deg, ${chord.color} 0%, ${chord.color}CC 100%)`,
                   borderColor: 'var(--jma-dark)',
-                  boxShadow: active ? '0 1px 0 0 var(--jma-dark)' : '0 4px 0 0 var(--jma-dark)',
+                  boxShadow: held ? '0 1px 0 0 var(--jma-dark)' : '0 4px 0 0 var(--jma-dark)',
                   color: 'white',
                 }}
                 animate={{
-                  scale: active ? 0.96 : 1,
-                  y: active ? 3 : 0,
+                  scale: held ? 0.96 : 1,
+                  y: held ? 3 : 0,
                 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 22 }}
               >
@@ -397,24 +448,27 @@ export default function GuitarInstrument({ getAudioGraph, initAudioContext, onPl
           className="grid grid-cols-3 md:grid-cols-9 gap-1.5 md:gap-2"
         >
           {NOTES.map((note, idx) => {
-            const active = flashId === `note-${idx}`;
+            const held = heldIds.has(`note-${idx}`);
             const color = noteColors[idx % noteColors.length];
             return (
               <motion.button
                 key={idx}
                 type="button"
                 data-testid={`guitar-note-${idx}`}
-                onPointerDown={() => pluck(note, idx)}
-                className="relative rounded-xl flex flex-col items-center justify-center py-3 md:py-5 border-2 touch-manipulation"
+                onPointerDown={noteDown(note, idx)}
+                onPointerUp={noteUp(idx)}
+                onPointerLeave={noteUp(idx)}
+                onPointerCancel={noteUp(idx)}
+                className="relative rounded-xl flex flex-col items-center justify-center py-3 md:py-5 border-2 touch-manipulation select-none"
                 style={{
                   background: `linear-gradient(180deg, ${color} 0%, ${color}CC 100%)`,
                   borderColor: 'var(--jma-dark)',
-                  boxShadow: active ? '0 1px 0 0 var(--jma-dark)' : '0 3px 0 0 var(--jma-dark)',
+                  boxShadow: held ? '0 1px 0 0 var(--jma-dark)' : '0 3px 0 0 var(--jma-dark)',
                   color: 'white',
                 }}
                 animate={{
-                  scale: active ? 0.94 : 1,
-                  y: active ? 2 : 0,
+                  scale: held ? 0.94 : 1,
+                  y: held ? 2 : 0,
                 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 22 }}
               >
@@ -429,8 +483,7 @@ export default function GuitarInstrument({ getAudioGraph, initAudioContext, onPl
       )}
 
       <div className="text-center text-white/60 text-[9px] md:text-[10px] font-bold uppercase tracking-widest mt-2">
-        Key: A minor · {mode === 'chords' ? 'Tap a chord or press 1–6' : 'Tap a note or use A S D F G H J K L'} · Q/W tone · Z/X mode
-        {!samplesReady && <span className="ml-2 text-yellow-300">· loading samples…</span>}
+        Key: A minor · {mode === 'chords' ? 'Hold a chord (1–6) — sustains, releases on lift' : 'Hold a note (A S D F G H J K L)'} · Q/W tone · Z/X mode
       </div>
     </div>
   );

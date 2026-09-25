@@ -685,6 +685,11 @@ function FreePlayPage() {
     };
 
     const down = (e) => {
+      // Guitar tab has its own dedicated keyboard listener (voices
+      // held/released per key, plus mode/tone toggles) — short-circuit
+      // here so bell/piano/xylo keys don't double-fire when the kid
+      // is on Guitar. Same for the drum-key branch below.
+      if (activeTab === 'guitar') return;
       const key = e.key.toLowerCase();
       const bellNote = KEY_TO_NOTE[e.key];
       if (bellNote && !pressedBells.has(bellNote)) {
@@ -703,6 +708,7 @@ function FreePlayPage() {
       }
     };
     const up = (e) => {
+      if (activeTab === 'guitar') return;
       const key = e.key.toLowerCase();
       const bellNote = KEY_TO_NOTE[e.key];
       if (bellNote) {
