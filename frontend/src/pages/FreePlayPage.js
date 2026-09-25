@@ -5,6 +5,7 @@ import { BELLS, KEY_TO_NOTE } from '../components/JellyBells';
 import { GameHeader } from '../components/GameUI';
 import RoomCharacters from '../components/RoomCharacters';
 import { XylophoneInstrument, PianoInstrument } from '../components/Instruments';
+import GuitarInstrument from '../components/GuitarInstrument';
 import { FullscreenButton } from '../components/FullscreenButton';
 import UnderwaterBackdrop from '../components/UnderwaterBackdrop';
 import { earnSticker, earnAchievement, earnAchievementUpTo } from '../hooks/useStickers';
@@ -23,6 +24,7 @@ const INSTRUMENT_TABS = [
   { id: 'bells', label: 'Jelly Bells' },
   { id: 'xylophone', label: 'Xylophone' },
   { id: 'piano', label: 'Piano' },
+  { id: 'guitar', label: 'Guitar' },
   { id: 'drums', label: 'Drums' },
 ];
 
@@ -937,6 +939,21 @@ function FreePlayPage() {
                 <ResponsiveScaler nativeWidth={900} nativeHeight={380}>
                   <PianoInstrument ref={pianoRef} onPlayNote={onBellDown} onNoteUp={onBellUp} highlightedNote={nextGuidedNote} />
                 </ResponsiveScaler>
+              )}
+              {activeTab === 'guitar' && (
+                <GuitarInstrument
+                  initAudioContext={initAudioContext}
+                  getAudioGraph={getAudioGraph}
+                  onPlay={() => {
+                    // Reuse the same particle/streak feedback the bells
+                    // use so the guitar plugs into the rest of Jam Hall.
+                    // A neutral "chord" note keeps the guided-song hook
+                    // and sticker awards untouched (guitar doesn't have
+                    // a per-note guided-song mapping yet).
+                    if (isRecording) setRecording(prev => [...prev, { note: 'guitar', type: 'guitar', time: Date.now() - recordStartRef.current }]);
+                    spawnParticles('#E74C3C');
+                  }}
+                />
               )}
             </motion.div>
           </>
