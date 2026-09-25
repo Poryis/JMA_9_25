@@ -95,11 +95,76 @@ function distortionCurve() {
 }
 
 // ---------------------------------------------------------------
+// Pick transient — the click of a pick striking a string. Very
+// short (30ms) burst of band-passed white noise layered ON TOP of
+// the sustained synth voice. Without this, sawtooth attacks read
+// as "synth" — with it, the ear hears "plucked/picked" and the
+// sustained body just carries the note. This is exactly how every
+// commercial synth-guitar patch is built (Yamaha MoxF6, Roland
+// SuperNATURAL, GarageBand's Modern Stack) — a percussive layer +
+// a sustained layer.
+//
+// Band-pass 3.5 kHz, Q=2, with a very fast decay. Extra HP at
+// 600 Hz clears the low mud. Level scales with note level so pick
+// transients get quieter for stacked chord voices.
+// ---------------------------------------------------------------
+function firePickTransient({ ctx, destination, distorted, startAt = 0, level = 1.0 }) {
+  const t0 = ctx.currentTime + startAt;
+  const dur = 0.06; // 60 ms total, most energy in first 20 ms
+  const sr = ctx.sampleRate;
+  const N = Math.max(64, Math.floor(sr * dur));
+  const buf = ctx.createBuffer(1, N, sr);
+  const data = buf.getChannelData(0);
+  // Pink-ish noise (crude filter over white noise) — brighter than
+  // pink, less harsh than white. Sounds like real pick attack.
+  let last = 0;
+  for (let i = 0; i < N; i++) {
+    const white = Math.random() * 2 - 1;
+    last = 0.6 * last + 0.4 * white;
+    data[i] = last;
+  }
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+
+  // Band-pass shaping — mid-high, around pick-attack sweet spot.
+  const bp = ctx.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.frequency.value = 3500;
+  bp.Q.value = 2.2;
+
+  const hp = ctx.createBiquadFilter();
+  hp.type = 'highpass';
+  hp.frequency.value = 600;
+
+  const g = ctx.createGain();
+  // Very fast attack, aggressive decay — the "click".
+  const peak = 0.5 * level * (distorted ? 0.7 : 1.0); // crunch already has extra energy
+  g.gain.setValueAtTime(0, t0);
+  g.gain.linearRampToValueAtTime(peak, t0 + 0.003);
+  g.gain.exponentialRampToValueAtTime(0.0005, t0 + dur);
+
+  src.connect(hp);
+  hp.connect(bp);
+  bp.connect(g);
+  g.connect(destination);
+
+  src.start(t0);
+  src.stop(t0 + dur + 0.02);
+}
+
+// ---------------------------------------------------------------
 // Voice — one held note. Detuned saw pair + sub-octave square +
 // filter env + amp env. Distorted / clean swap the signal chain.
+// A pick transient is fired in parallel by makeVoice() so the
+// attack reads as picked, not synthy.
 // ---------------------------------------------------------------
 function makeVoice({ ctx, destination, freq, distorted, startAt = 0, level = 1.0 }) {
   const t0 = ctx.currentTime + startAt;
+
+  // Fire the pick transient FIRST (layered on top of the synth
+  // body). Level scales down slightly for stacked chord voices
+  // so the strum doesn't sound like six pick attacks at once.
+  firePickTransient({ ctx, destination, distorted, startAt, level });
 
   // Oscillators.
   const osc1 = ctx.createOscillator();
@@ -118,34 +183,38 @@ function makeVoice({ ctx, destination, freq, distorted, startAt = 0, level = 1.0
   oscMix.gain.value = 1.0;
   osc1.connect(oscMix);
   osc2.connect(oscMix);
-  // Sub-octave square is subtle — kept at 40% so it adds weight
-  // without muddying the fundamental.
+  // Sub-octave square adds weight without muddying the fundamental.
   const subGain = ctx.createGain();
   subGain.gain.value = 0.4;
   osc3.connect(subGain);
   subGain.connect(oscMix);
 
-  // Amp envelope.
+  // Amp envelope — SHARPER attack than v3 so the synth body pops
+  // in fast enough to line up with the pick transient. A=2 ms
+  // linear (immediate), tiny decay to sustain, S=0.62.
   const amp = ctx.createGain();
   amp.gain.setValueAtTime(0, t0);
-  amp.gain.linearRampToValueAtTime(level, t0 + 0.006);              // A: 6 ms
-  amp.gain.linearRampToValueAtTime(level * 0.65, t0 + 0.006 + 0.09); // D: 90 ms → S: 0.65
+  amp.gain.linearRampToValueAtTime(level * 1.05, t0 + 0.002);       // A: 2 ms — near-instant
+  amp.gain.linearRampToValueAtTime(level * 0.62, t0 + 0.002 + 0.05); // D: 50 ms → S: 0.62
 
-  // LP filter with envelope — the "wah" opening.
+  // LP filter with envelope — TIGHTER sweep than v3. Cutoff opens
+  // 1600 → 6000 Hz over just 25 ms so the "wah" isn't audible on
+  // its own; it just adds bite to the pick attack. Then settles to
+  // sustain cutoff (higher for clean, tighter for crunch).
   const lp = ctx.createBiquadFilter();
   lp.type = 'lowpass';
-  lp.Q.value = 3.5;
-  const sustainCutoff = distorted ? 3000 : 6000;
-  lp.frequency.setValueAtTime(1200, t0);
-  lp.frequency.exponentialRampToValueAtTime(4500, t0 + 0.006 + 0.05);
-  lp.frequency.exponentialRampToValueAtTime(sustainCutoff, t0 + 0.006 + 0.20);
+  lp.Q.value = 2.0;
+  const sustainCutoff = distorted ? 2600 : 5500;
+  lp.frequency.setValueAtTime(1600, t0);
+  lp.frequency.exponentialRampToValueAtTime(6000, t0 + 0.025);
+  lp.frequency.exponentialRampToValueAtTime(sustainCutoff, t0 + 0.18);
 
   oscMix.connect(amp);
   amp.connect(lp);
 
   // Distortion branch or clean-out.
   const outGain = ctx.createGain();
-  outGain.gain.value = distorted ? 0.11 : 0.13;
+  outGain.gain.value = distorted ? 0.10 : 0.12;
   if (distorted) {
     const shaper = ctx.createWaveShaper();
     shaper.curve = distortionCurve();
@@ -170,10 +239,7 @@ function makeVoice({ ctx, destination, freq, distorted, startAt = 0, level = 1.0
       if (this.released) return;
       this.released = true;
       const t = this.ctx.currentTime;
-      const R = 0.26;
-      // Cancel any queued envelope points, hold current value, then
-      // ramp down. Prevents pop from immediate zero and preserves
-      // whatever level the sustain was at.
+      const R = 0.22;
       this.amp.gain.cancelScheduledValues(t);
       const cur = this.amp.gain.value;
       this.amp.gain.setValueAtTime(cur, t);
