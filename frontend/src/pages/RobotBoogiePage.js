@@ -1194,18 +1194,19 @@ export default function RobotBoogiePage() {
           the cycle registry so lab + navy are the only two left. */}
       <GameHeader title="ROBOT BOOGIE" showHomeButton={true} />
 
-      {/* Reset chip + speed slider row. Positioned below the fixed
-          GameHeader — pt-20 on mobile (the "Back" button pill is ~76px
-          tall on phones and the pt-14 we had before caused the title,
-          reset, and speed slider to visually stack on narrow screens).
-          flex-wrap so if a very narrow viewport still can't fit both
-          chips on one line they stack cleanly instead of overlapping.
-
-          z-30 (was z-10) so the Reset button STAYS TAPPABLE even when
-          a kid has dragged a character up into this area. Previously
-          the stage (z-10, later in DOM) painted characters on top of
-          the reset row and their hit-divs stole the tap. */}
-      <div className="relative z-30 flex items-center justify-center flex-wrap gap-2 md:gap-3 pt-20 md:pt-16 pb-0">
+      {/* Reset chip + speed slider — FLOATED in the top-right corner
+          instead of taking a flex row of its own. The GameHeader (fixed
+          top-0) has an empty top-right, so this cluster tucks neatly
+          alongside the back-button pill. Kids can now see the whole
+          top-row character underneath — the controls no longer sit
+          across the character's face. `pointer-events-auto` on each
+          child so taps still land; the wrapper itself is a bare
+          positioning shell. z-40 sits above the stage (z-10) and
+          characters (z-3) but below the header (z-50). */}
+      <div
+        className="fixed top-2 right-2 md:top-3 md:right-4 z-40 flex flex-row items-center gap-2"
+        style={{ pointerEvents: 'none' }}
+      >
         <button
           type="button"
           data-testid="robot-boogie-reset"
@@ -1216,6 +1217,7 @@ export default function RobotBoogiePage() {
             color: 'white',
             borderColor: 'var(--jma-dark)',
             boxShadow: '0 3px 0 0 var(--jma-dark)',
+            pointerEvents: 'auto',
           }}
         >
           <RotateCcw className="w-3.5 h-3.5" />
@@ -1228,6 +1230,7 @@ export default function RobotBoogiePage() {
             backgroundColor: '#F2C94C',
             borderColor: 'var(--jma-dark)',
             boxShadow: '0 3px 0 0 var(--jma-dark)',
+            pointerEvents: 'auto',
           }}
         >
           <span aria-hidden="true" className="text-xs font-black text-[color:var(--jma-dark)]">🐢</span>
@@ -1255,9 +1258,13 @@ export default function RobotBoogiePage() {
           `min-h-0` is critical: it lets this flex-1 child actually
           shrink INSIDE the height-locked outer page. Without it, the
           child clings to its natural content size and pushes the
-          lineup off-screen on shorter phones. */}
+          lineup off-screen on shorter phones.
+
+          `pt-20 md:pt-16` reserves clearance for the fixed GameHeader
+          (back-button pill + title marquee) plus the floated Reset /
+          Speed cluster in the top-right corner. */}
       <div ref={stageRef}
-           className="relative z-10 flex-1 min-h-0 flex flex-col items-center w-full mx-auto px-2 md:px-4 pb-2"
+           className="relative z-10 flex-1 min-h-0 flex flex-col items-center w-full mx-auto px-2 md:px-4 pb-2 pt-20 md:pt-16"
            style={{ maxWidth: '1200px' }}>
 
         {/* Lightning bolts — drawn OVER the entire stage from the Time
