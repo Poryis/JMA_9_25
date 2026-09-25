@@ -474,7 +474,7 @@ export default function GuitarInstrument({ getAudioGraph, initAudioContext, onPl
       <div
         data-testid="guitar-strings"
         className="relative w-full mb-3 rounded-lg overflow-hidden"
-        style={{ background: 'linear-gradient(180deg, #F4E6C8 0%, #E5D1A3 100%)', border: '2px solid #000', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.15)' }}
+        style={{ background: '#000', border: '2px solid #000', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.15)' }}
       >
         <GuitarArt
           frame={frame}
