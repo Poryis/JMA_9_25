@@ -66,7 +66,6 @@ function ResultsPage({ score, gameStats, resetGame }) {
         style={{ 
           color: ratingColor, 
           fontFamily: "'Fredoka', cursive",
-          textShadow: '3px 3px 0 var(--jma-dark)'
         }}
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}

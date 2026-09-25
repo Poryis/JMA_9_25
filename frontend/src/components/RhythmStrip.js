@@ -90,7 +90,6 @@ export default function RhythmStrip({
             <span
               className="text-[10px] sm:text-xs md:text-sm font-black font-display leading-none text-center pointer-events-none"
               style={{
-                textShadow: '1px 1px 0 rgba(255,255,255,0.5)',
                 marginTop: 2,
               }}
             >

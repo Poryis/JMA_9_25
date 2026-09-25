@@ -329,7 +329,6 @@ function SimonSaysPage({ score, setScore, gameStats, setGameStats, resetGame }) 
             color: 'var(--jma-dark)',
             fontFamily: "'Fredoka', cursive",
             WebkitTextStroke: 0,
-            textShadow: '2px 2px 0 rgba(0,0,0,0.18)',
           }}
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -534,7 +533,6 @@ function SimonSaysPage({ score, setScore, gameStats, setGameStats, resetGame }) 
                   top: '20%', left: '50%', transform: 'translateX(-50%)',
                   fontSize: '2rem',
                   color: mn.color,
-                  textShadow: '2px 2px 0 rgba(10,37,64,0.4)',
                   zIndex: 20,
                 }}
               >

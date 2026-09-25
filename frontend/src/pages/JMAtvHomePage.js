@@ -205,7 +205,7 @@ export default function JMAtvHomePage() {
           is offset to cols 2-3 / 4-5 so it centers under the top row
           while every TV stays the same size. Falls back to a normal
           1/2-col stack on smaller screens. */}
-      <div className="relative z-10 w-full max-w-5xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 md:gap-8">
+      <div className="relative z-10 w-full max-w-5xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-14 sm:gap-10 md:gap-8">
         {JMATV_CHANNELS.slice(0, 3).map((ch, i) => (
           <div
             key={ch.id}

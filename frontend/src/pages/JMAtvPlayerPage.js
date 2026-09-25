@@ -167,7 +167,6 @@ export default function JMAtvPlayerPage() {
           style={{
             fontSize: 'clamp(20px, 3vw, 32px)',
             color: 'white',
-            textShadow: `2px 2px 0 ${channel.accent}, 3px 3px 0 #0A2540`,
           }}
         >
           {episode.title}
@@ -287,7 +286,6 @@ export default function JMAtvPlayerPage() {
                     </div>
                     <div
                       className="text-base md:text-xl font-black font-display uppercase tracking-wider"
-                      style={{ textShadow: '2px 2px 0 rgba(0,0,0,0.6)' }}
                     >
                       Tap for sound
                     </div>
@@ -339,7 +337,6 @@ export default function JMAtvPlayerPage() {
             />
             <span
               className="text-[11px] font-black tracking-[0.18em] uppercase"
-              style={{ color: '#FFE7C2', textShadow: '1px 1px 0 #3F2A14' }}
             >
               JMAtv
             </span>
@@ -436,7 +433,6 @@ export default function JMAtvPlayerPage() {
                     <div className="absolute bottom-1 left-0 right-0 px-2 flex items-center justify-between">
                       <span
                         className="font-black font-display text-xs md:text-sm text-white truncate"
-                        style={{ textShadow: '1px 1px 0 rgba(0,0,0,0.7)' }}
                       >
                         {ep.title}
                       </span>

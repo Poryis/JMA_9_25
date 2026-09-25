@@ -166,7 +166,6 @@ function ModeTile({ mode, index, onPick }) {
                 color: 'white',
                 WebkitTextStroke: 'clamp(1.5px, 0.35vw, 3px) var(--jma-dark)',
                 paintOrder: 'stroke fill',
-                textShadow: `2px 2px 0 ${mode.accent}, 4px 4px 0 var(--jma-dark)`,
                 letterSpacing: '0.01em',
               }}
             >
@@ -1347,7 +1346,6 @@ export default function BoomGardenPage() {
                   borderColor: 'var(--jma-dark)',
                   color: 'white',
                   fontSize: 'clamp(20px, 3vw, 28px)',
-                  textShadow: '2px 2px 0 rgba(10,37,64,0.45)',
                   boxShadow: '0 5px 0 0 var(--jma-dark)',
                   zIndex: 64,
                 }}
@@ -1430,7 +1428,6 @@ export default function BoomGardenPage() {
                   borderColor: 'var(--jma-dark)',
                   color: 'white',
                   fontSize: 'clamp(22px, 4vw, 36px)',
-                  textShadow: '3px 3px 0 rgba(10,37,64,0.45)',
                   boxShadow: '0 8px 0 0 var(--jma-dark), 0 16px 28px rgba(0,0,0,0.32)',
                   zIndex: 65,
                 }}
@@ -1697,7 +1694,6 @@ export default function BoomGardenPage() {
                     color: 'white',
                     borderColor: 'var(--jma-dark)',
                     boxShadow: '0 3px 0 0 var(--jma-dark)',
-                    textShadow: '1px 1px 0 rgba(10,37,64,0.4)',
                   }}
                 >
                   How to play
@@ -1755,7 +1751,6 @@ export default function BoomGardenPage() {
                     backgroundColor: modeConfig.color,
                     color: 'white',
                     boxShadow: '0 4px 0 0 var(--jma-dark)',
-                    textShadow: '1px 1px 0 rgba(10,37,64,0.4)',
                   }}
                 >
                   Got it — let&apos;s go! →

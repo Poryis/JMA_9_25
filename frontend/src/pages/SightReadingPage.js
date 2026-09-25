@@ -279,14 +279,12 @@ export default function SightReadingPage() {
 
         <motion.h1
           className="text-3xl md:text-5xl font-black mb-2 text-center font-display uppercase"
-          style={{ color: 'white', textShadow: '3px 3px 0 var(--jma-dark), 5px 5px 0 rgba(0,0,0,0.5)' }}
           initial={{ y: -30, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
         >
           SIGHT-READING SPRINT
         </motion.h1>
         <motion.p
           className="text-base md:text-lg font-bold mb-4 text-center"
-          style={{ color: '#FFE9C4', textShadow: '1px 1px 0 rgba(0,0,0,0.55)' }}
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}
         >
           Read each card. Play it back fast. <b>5 cards per run.</b>

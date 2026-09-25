@@ -59,7 +59,6 @@ function ColoredKey({ keyDef, scaleHighlighted, isTonic, onTap, playingNow }) {
       </div>
       <span
         className="mb-1 md:mb-2 text-[10px] md:text-sm font-black font-display leading-none"
-        style={{ color: 'var(--jma-dark)', textShadow: '1px 1px 0 rgba(255,255,255,0.6)' }}
       >
         {formatNoteName(keyDef.pitch, keyDef.solfege)}
       </span>
@@ -548,7 +547,6 @@ export default function SongStudioPage() {
               />
               <span
                 className="mb-1 md:mb-1.5 text-[9px] md:text-xs font-black font-display leading-none"
-                style={{ color: 'var(--jma-dark)', textShadow: '1px 1px 0 rgba(255,255,255,0.6)' }}
               >
                 Rest
               </span>

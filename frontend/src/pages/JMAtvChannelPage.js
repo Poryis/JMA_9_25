@@ -79,7 +79,6 @@ function EpisodeCard({ episode, index, channel, onClick }) {
         <div className="absolute bottom-0 left-0 right-0 px-2.5 py-1.5">
           <h3
             className="font-black font-display leading-tight text-sm md:text-base text-white"
-            style={{ textShadow: '1px 1px 0 rgba(0,0,0,0.7)' }}
           >
             {episode.title}
           </h3>
@@ -131,7 +130,6 @@ export default function JMAtvChannelPage() {
           style={{
             fontSize: 'clamp(28px, 4.6vw, 48px)',
             color: 'white',
-            textShadow: `2px 2px 0 ${channel.accent}, 4px 4px 0 #0A2540`,
           }}
         >
           {channel.title}

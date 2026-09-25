@@ -58,7 +58,6 @@ export default function AudioUnlockOverlay() {
             className="text-3xl md:text-5xl font-black font-display text-center mb-2"
             style={{
               color: 'white',
-              textShadow: '3px 3px 0 var(--jma-dark), 5px 5px 0 rgba(0,0,0,0.5)',
             }}
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -69,7 +68,6 @@ export default function AudioUnlockOverlay() {
 
           <motion.p
             className="text-base md:text-lg font-bold text-center px-6 max-w-md"
-            style={{ color: '#FFE07A', textShadow: '1px 1px 0 rgba(0,0,0,0.5)' }}
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3 }}

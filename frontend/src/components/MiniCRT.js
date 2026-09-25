@@ -346,7 +346,6 @@ export default function MiniCRT({
               {fallbackLabel && (
                 <span
                   className="absolute bottom-1 left-1 right-1 text-center font-black font-display uppercase text-[9px] tracking-wider"
-                  style={{ color: accent, textShadow: '1px 1px 0 #000' }}
                 >
                   {fallbackLabel}
                 </span>

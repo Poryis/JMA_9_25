@@ -580,7 +580,6 @@ function LoopStudioPage() {
                 border: '2px solid #000',
                 color: '#61E8DA',
                 fontFamily: 'ui-monospace, Menlo, monospace',
-                textShadow: '0 0 8px rgba(97,232,218,0.55)',
                 boxShadow: 'inset 0 0 12px rgba(97,232,218,0.15)',
                 minWidth: 176,
               }}

@@ -447,11 +447,10 @@ export default function DetectivePage() {
         <motion.div className="text-center mb-3" initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
           <h1
             className="text-3xl md:text-5xl font-black font-display uppercase"
-            style={{ color: 'white', textShadow: '3px 3px 0 var(--jma-dark), 5px 5px 0 rgba(0,0,0,0.5)' }}
           >
             DETECTIVE<br className="md:hidden" /> DR. JELLYBONE
           </h1>
-          <p className="text-sm md:text-base font-bold mt-1" style={{ color: '#FFE9C4', textShadow: '1px 1px 0 rgba(0,0,0,0.6)' }}>
+          <p className="text-sm md:text-lg font-bold mt-1" style={{ color: 'var(--jma-dark)' }}>
             Find the wrong note!
           </p>
         </motion.div>
@@ -542,12 +541,15 @@ export default function DetectivePage() {
                   data-testid="detective-difficulty-restquiz"
                   className={`relative overflow-hidden p-4 pl-5 text-left flex items-center gap-3 rounded-2xl cursor-pointer ${difficulty === 'restquiz' ? 'ring-4 ring-[var(--jma-purple)]' : ''}`}
                   style={{
-                    // Dark navy "case file" paper w/ subtle purple tint
+                    // Manila-folder paper — kraft-tan gradient w/ a
+                    // subtle notched-tab feel via the border. Reads as
+                    // a real dossier lifted off the desk instead of a
+                    // dark navy card that fought the rest of the menu.
                     background:
-                      'linear-gradient(135deg, #0A2540 0%, #142F55 55%, #1B3A6A 100%)',
-                    border: `3px dashed ${accent}`,
-                    boxShadow: `0 6px 0 0 ${accent}, inset 0 2px 0 rgba(255,255,255,0.08)`,
-                    color: 'white',
+                      'linear-gradient(135deg, #F4DBA0 0%, #E8C67A 55%, #D4A85A 100%)',
+                    border: '3px dashed #8B5A2B',
+                    boxShadow: '0 6px 0 0 #8B5A2B, inset 0 2px 0 rgba(255,255,255,0.35)',
+                    color: '#3A2410',
                   }}
                   onClick={() => startGame('restquiz')}
                   initial={{ y: 16, opacity: 0 }}
@@ -601,24 +603,21 @@ export default function DetectivePage() {
                   <div className="flex-1 min-w-0 relative z-[1]">
                     <h3
                       className="text-lg font-black font-display leading-tight"
-                      style={{
-                        color: 'white',
-                        textShadow: `1px 1px 0 ${accent}, 2px 2px 0 rgba(0,0,0,0.5)`,
-                      }}
+                      style={{ color: '#3A2410' }}
                     >
                       {lvl.name}
                     </h3>
                     <p
                       className="text-xs font-bold"
-                      style={{ color: '#E4CDF7' }}
+                      style={{ color: '#6B4A20' }}
                     >
                       {lvl.description}
                     </p>
                   </div>
                   {best && best.score > 0 && (
                     <div className="text-right flex-shrink-0 relative z-[1]">
-                      <div className="text-[10px] uppercase font-bold" style={{ color: '#E4CDF7', opacity: 0.85 }}>Best</div>
-                      <div className="text-sm font-black" style={{ color: '#FFCC00' }}>
+                      <div className="text-[10px] uppercase font-bold" style={{ color: '#8B5A2B' }}>Best</div>
+                      <div className="text-sm font-black" style={{ color: '#B82A20' }}>
                         {best.score} pts
                       </div>
                     </div>
@@ -644,7 +643,17 @@ export default function DetectivePage() {
         backgroundPosition: 'center',
       }}
     >
-      <GameHeader title="DR. JELLYBONE" subtitle={LEVELS[difficulty].name} showHomeButton={true} backLink={{ to: '/play', label: 'Play' }} />
+      <GameHeader
+        title="DR. JELLYBONE"
+        subtitle={LEVELS[difficulty].name}
+        showHomeButton={true}
+        onBack={() => {
+          // Mid-game back → return to difficulty picker on the same
+          // page, don't exit to /play. Wiring 'menu' state is enough;
+          // the top-level render swaps to the picker view.
+          setGameState('menu');
+        }}
+      />
       <RoomCharacters room="detective" />
 
       <main className="flex-1 flex flex-col items-center pt-20 md:pt-24 pb-6 px-3">
@@ -862,7 +871,6 @@ export default function DetectivePage() {
                     {showAnswer && isAnswer && bell ? (
                       <span
                         className="text-xs md:text-sm font-black font-display"
-                        style={{ color: labelColor, textShadow: '1px 1px 0 rgba(0,0,0,0.18)' }}
                       >
                         {nameFor(bell.note, bell.solfege)}{note === 'High C' ? '↑' : ''}
                       </span>

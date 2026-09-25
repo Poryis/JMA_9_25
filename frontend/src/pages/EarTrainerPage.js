@@ -354,8 +354,7 @@ function EarTrainerPage() {
         <AnimatePresence>
           {isCorrect !== null && (
             <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className="mb-4">
-              <span className={`text-3xl font-black font-display ${isCorrect ? 'text-[var(--jma-green)]' : 'text-[var(--jma-red)]'}`}
-                style={{ textShadow: '2px 2px 0 var(--jma-dark)' }}>
+              <span className={`text-3xl font-black font-display ${isCorrect ? 'text-[var(--jma-green)]' : 'text-[var(--jma-red)]'}`}>
                 {isCorrect ? 'PERFECT!' : 'TRY AGAIN!'}
               </span>
             </motion.div>

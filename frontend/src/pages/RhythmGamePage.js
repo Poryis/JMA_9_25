@@ -89,8 +89,7 @@ function FallingBellNote({ note, noteId, laneIndex, totalLanes, speed, isDrum, r
           draggable={false}
         />
       </div>
-      <span className="text-xs font-bold mt-0.5 px-1.5 rounded-full text-white"
-        style={{ backgroundColor: color, textShadow: '1px 1px 0 rgba(0,0,0,0.3)' }}>
+      <span className="text-xs font-bold mt-0.5 px-1.5 rounded-full text-white" style={{ backgroundColor: 'var(--jma-dark)' }}>
         {label}
       </span>
     </motion.div>
@@ -422,7 +421,6 @@ function RhythmGamePage({ score, setScore, gameStats, setGameStats, resetGame })
             NEW HIGH SCORE!
           </motion.div>
         )}
-        <h1 className="text-4xl md:text-5xl font-black mb-2 font-display" style={{ color: ratingColor, textShadow: '3px 3px 0 var(--jma-dark)' }}>{rating}</h1>
         <p className="text-lg mb-4 font-display" style={{ color: 'var(--jma-dark)' }}>{selectedSong.name} - {speedConfig.label}</p>
         <div className="game-card p-6 w-full max-w-sm mb-6">
           <div className="text-center mb-4">

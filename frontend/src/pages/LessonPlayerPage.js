@@ -186,13 +186,11 @@ export default function LessonPlayerPage() {
       >
         <h1
           className="text-3xl md:text-5xl font-black font-display"
-          style={{ color: 'white', textShadow: '3px 3px 0 var(--jma-dark), 5px 5px 0 rgba(0,0,0,0.5)' }}
         >
           {lesson.title}
         </h1>
         <p
           className="mt-1 text-sm md:text-base font-bold"
-          style={{ color: '#FFE9C4', textShadow: '1px 1px 0 rgba(0,0,0,0.7)' }}
         >
           {lesson.subtitle}
         </p>
@@ -324,7 +322,6 @@ export default function LessonPlayerPage() {
         {!completed && (
           <span
             className="text-xs md:text-sm font-bold flex items-center gap-1.5"
-            style={{ color: '#FFE9C4', textShadow: '1px 1px 0 rgba(0,0,0,0.7)' }}
           >
             <RotateCcw className="w-3.5 h-3.5" /> Finish the video to unlock the next lesson
           </span>

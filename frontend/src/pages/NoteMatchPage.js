@@ -368,7 +368,6 @@ export default function NoteMatchPage() {
                     <div className="flex items-center gap-0.5 leading-none">
                       <span
                         className="text-sm md:text-base font-black font-display"
-                        style={{ color: card.bell.color, textShadow: '1px 1px 0 rgba(0,0,0,0.3)' }}
                       >
                         {nameFor(card.bell.note, card.bell.solfege)}
                       </span>

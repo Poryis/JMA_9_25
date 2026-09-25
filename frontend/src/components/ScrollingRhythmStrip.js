@@ -125,7 +125,6 @@ export default function ScrollingRhythmStrip({ pattern, kickOff, height = 170, b
                   className="text-xs md:text-sm font-black font-display mt-1 pointer-events-none"
                   style={{
                     color: 'var(--jma-dark)',
-                    textShadow: '1px 1px 0 rgba(255,255,255,0.8)',
                   }}
                 >
                   {def.syllable}

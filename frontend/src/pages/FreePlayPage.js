@@ -632,6 +632,14 @@ function FreePlayPage() {
   const onDrumDown = useCallback((drumId) => {
     initAudioContext();
     playDrumSound(drumId);
+    // Crash auto-fires the kick with it — real drummers almost always
+    // hit crash + kick together on a downbeat accent, and kids never
+    // remember to double-tap. This makes any crash feel "big" without
+    // requiring two-handed coordination.
+    if (drumId === 'crash') {
+      playDrumSound('kick');
+      if (isRecording) setRecording(prev => [...prev, { note: 'kick', type: 'drum', time: Date.now() - recordStartRef.current }]);
+    }
     setStreak(prev => prev + 1);
     spawnParticles(DRUM_INFO[drumId]?.color || '#E74C3C');
     if (isRecording) setRecording(prev => [...prev, { note: drumId, type: 'drum', time: Date.now() - recordStartRef.current }]);
@@ -840,7 +848,7 @@ function FreePlayPage() {
                 }}
                 disabled={recorder.isProcessing}
               >
-                <Mic className="w-3 h-3" /> Record My Jam
+                <Mic className="w-3 h-3" /> Record
               </button>
             ) : (
               <button
@@ -869,7 +877,7 @@ function FreePlayPage() {
                     onClick={playBack}
                     disabled={isPlayingBack}
                   >
-                    <Play className="w-3 h-3" /> {isPlayingBack ? 'Playing...' : 'Play It Back'}
+                    <Play className="w-3 h-3" /> {isPlayingBack ? 'Playing...' : 'Playback'}
                   </button>
                 )}
                 {recorder.lastMp3Url && (
@@ -878,7 +886,7 @@ function FreePlayPage() {
                     className="chunky-btn bg-[var(--jma-yellow)] text-[var(--jma-dark)] px-2 py-0.5 md:py-1 flex items-center gap-1 text-[10px] md:text-xs font-bold touch-manipulation"
                     onClick={() => recorder.download(`my-jam-${Date.now()}.mp3`)}
                   >
-                    <Download className="w-3 h-3" /> Save as MP3
+                    <Download className="w-3 h-3" /> Save
                   </button>
                 )}
               </>

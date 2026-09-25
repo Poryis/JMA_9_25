@@ -11,44 +11,26 @@ import RetroTVIcon from './RetroTVIcon';
 // the JMA world. Deliberately not a plain <h1> anymore because kids
 // were reading the old white-with-drop-shadow title as a placeholder.
 function MarqueeTitle({ text }) {
+  // Replaces the old arcade-plate title (yellow gradient + red corner
+  // rivets + 4-way stroked text shadow) with the "Pick Your Jam" pill:
+  // solid black rounded pill, chunky navy border + drop shadow, white
+  // sans-caps text. No text-shadow — iOS was rendering the stacked
+  // shadows unreliably. Applies globally to every GameHeader across
+  // the app.
   return (
     <div
-      className="relative inline-flex items-center justify-center px-3 md:px-5 py-1.5 md:py-2 rounded-lg md:rounded-xl"
+      className="inline-flex items-center justify-center px-4 md:px-6 py-1.5 md:py-2 rounded-full"
       style={{
-        background: 'linear-gradient(180deg, #FFDA3D 0%, #FFCC00 100%)',
+        background: '#000000',
         border: '3px solid var(--jma-dark)',
         boxShadow: '0 4px 0 0 var(--jma-dark)',
       }}
     >
-      {[
-        { top: -4, left: -4 },
-        { top: -4, right: -4 },
-        { bottom: -4, left: -4 },
-        { bottom: -4, right: -4 },
-      ].map((pos, i) => (
-        <span
-          key={i}
-          aria-hidden="true"
-          className="absolute rounded-full"
-          style={{
-            ...pos,
-            width: 8,
-            height: 8,
-            background: '#FF3B30',
-            border: '2px solid var(--jma-dark)',
-          }}
-        />
-      ))}
       <span
         className="font-black font-display uppercase text-sm md:text-lg lg:text-xl leading-none whitespace-nowrap"
         style={{
           color: '#FFFFFF',
-          letterSpacing: '0.03em',
-          // 4-way JMA-dark outline + offset shadow → chunky arcade feel
-          // without relying on -webkit-text-stroke (which pinches
-          // letterforms on some fonts). Every text-shadow layer stacks.
-          textShadow:
-            '-2px -2px 0 var(--jma-dark), 2px -2px 0 var(--jma-dark), -2px 2px 0 var(--jma-dark), 2px 2px 0 var(--jma-dark), 3px 4px 0 rgba(0,0,0,0.28)',
+          letterSpacing: '0.04em',
         }}
       >
         {text}
@@ -76,7 +58,7 @@ function SubtitleChip({ text }) {
   );
 }
 
-function GameHeader({ title, subtitle, score, streak, showHomeButton = true, backTo = null }) {
+function GameHeader({ title, subtitle, score, streak, showHomeButton = true, backTo = null, onBack: onBackOverride = null }) {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -103,6 +85,12 @@ function GameHeader({ title, subtitle, score, streak, showHomeButton = true, bac
   const isOnHome = location.pathname === '/';
   const renderBackButton = showHomeButton && !isOnHome;
   const handleBack = () => {
+    // Custom onBack overrides default navigation — used by games that
+    // want "back" to return to their in-page menu (e.g. difficulty
+    // picker) instead of exiting the whole route. Dr. Jellybone uses
+    // this so mid-game "back" drops kids to the difficulty screen
+    // instead of jumping all the way out to /play.
+    if (typeof onBackOverride === 'function') { onBackOverride(); return; }
     if (backTo) navigate(backTo);
     else navigate(-1);
   };
@@ -172,7 +160,6 @@ function GameHeader({ title, subtitle, score, streak, showHomeButton = true, bac
                 style={{
                   color: 'white',
                   backgroundColor: 'var(--jma-dark)',
-                  textShadow: '1px 1px 0 rgba(0,0,0,0.3)',
                   fontSize: collapsed ? 15 : 13,
                   lineHeight: 1,
                   boxShadow: collapsed ? '0 3px 0 0 rgba(0,0,0,0.35)' : 'none',

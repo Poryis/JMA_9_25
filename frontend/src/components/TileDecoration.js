@@ -50,7 +50,6 @@ export default function TileDecoration({ type, accent }) {
                 bottom: 8,
                 fontSize: n.size,
                 color: chalkColors[n.c],
-                textShadow: '0 2px 0 rgba(10,37,64,0.45), 0 0 10px rgba(255,255,255,0.35)',
                 animation: `${n.anim} ${n.dur}s ease-in ${n.delay}s infinite`,
               }}
             >
@@ -178,7 +177,6 @@ export default function TileDecoration({ type, accent }) {
                 bottom: 8,
                 fontSize: n.size,
                 color: 'white',
-                textShadow: '0 2px 0 var(--jma-dark), 0 0 8px rgba(255,255,255,0.4)',
                 animation: `tile-note-rise ${n.dur}s ease-in ${n.delay}s infinite`,
               }}
             >

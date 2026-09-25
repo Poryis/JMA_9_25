@@ -53,7 +53,6 @@ function LessonCard({ lesson, index, locked, watched, onPlay }) {
           style={{
             fontSize: 'clamp(26px, 3.8vw, 40px)',
             color: 'white',
-            textShadow: '2px 2px 0 rgba(0,0,0,0.35)',
           }}
         >
           {lesson.num}
