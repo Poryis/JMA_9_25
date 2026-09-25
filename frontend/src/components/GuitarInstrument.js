@@ -21,7 +21,7 @@
 // press/release gating (120 ms palm-mute fade), full keyboard
 // bindings, tone/mode toggles.
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { GUITAR_FRAMES, GUITAR_ROTATE, GUITAR_VIEWBOX } from './guitarFrames';
 
@@ -177,6 +177,19 @@ function makeVoice({ ctx, destination, tone, freq, startAt = 0, level = 1.0 }) {
 // Guitar visual — vector-traced frames of the user's hand-drawn
 // guitar (idle + two strum frames), rotated to sit horizontally.
 // ---------------------------------------------------------------
+function StrapPin({ x, y, angle }) {
+  return (
+    <g transform={`translate(${x} ${y}) rotate(${angle})`}>
+      <rect x="0" y="-5" width="13" height="10" fill="#8A8A8A" stroke="#000" strokeWidth="3" strokeLinejoin="round" />
+      <rect x="11" y="-11" width="8" height="22" rx="2.5" fill="#9A9A9A" stroke="#000" strokeWidth="3" strokeLinejoin="round" />
+    </g>
+  );
+}
+
+const GuitarFrame = memo(function GuitarFrame({ html, visible }) {
+  return <g style={{ display: visible ? 'inline' : 'none' }} dangerouslySetInnerHTML={{ __html: html }} />;
+});
+
 function GuitarArt({ frame }) {
   return (
     <svg
@@ -185,7 +198,13 @@ function GuitarArt({ frame }) {
       className="w-full h-36 md:h-60"
       aria-hidden="true"
     >
-      <g transform={GUITAR_ROTATE} dangerouslySetInnerHTML={{ __html: GUITAR_FRAMES[frame] }} />
+      <g transform={GUITAR_ROTATE}>
+        {GUITAR_FRAMES.map((html, i) => (
+          <GuitarFrame key={i} html={html} visible={i === frame} />
+        ))}
+        <StrapPin x={427} y={392} angle={-42} />
+        <StrapPin x={157} y={814} angle={150} />
+      </g>
     </svg>
   );
 }
