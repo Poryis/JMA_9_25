@@ -9,12 +9,10 @@
 //     high gain — they play power chords: root + 5th + octave, 3
 //     strings, no 3rd). We swap voicings automatically when the tone
 //     toggle is on Crunch.
-//   • **Real guitar visual**: 6 SVG strings running across the top
-//     of the component with tuning pegs on the left, a black pickup
-//     bar in the middle, and a bridge on the right. Each string has
-//     its own thickness (low E chunky, high E thin) and its own
-//     wobble animation triggered on strum. Power chords vibrate only
-//     3 of the 6 strings — the rock-guitarist visual signature.
+//   • **Guitar visual**: the user's own hand-drawn guitar, vector-
+//     traced into SVG (guitarFrames.js) so it scales crisply at any
+//     resolution. Rotated horizontal; strums flip between the two
+//     hand-drawn strum frames.
 //   • **Fret-position chord pads**: chord pads redesigned to feel
 //     like fret grips (dark headstock border, "position" number in
 //     the corner, string count indicator).
@@ -25,6 +23,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { GUITAR_FRAMES, GUITAR_ROTATE, GUITAR_VIEWBOX } from './guitarFrames';
 
 // ---------------------------------------------------------------
 // Sample manifest — chromatic C3 → E5. Loaded on tab-open into
@@ -175,226 +174,18 @@ function makeVoice({ ctx, destination, tone, freq, startAt = 0, level = 1.0 }) {
 }
 
 // ---------------------------------------------------------------
-// String visual — Telecaster-styled cartoon guitar. Cream body on
-// the right, wooden fretboard in the middle, red headstock on the
-// left, 6 strings from tuning pegs → converge at the nut → run
-// parallel to the bridge. Skull knobs, black pickup, strap fragment
-// off the top horn. Each string vibrates independently on strum.
-//
-// Style keys pulled from user's reference sketch: chunky 2.5-3px
-// black outlines (all bodies + neck + pickguard), cream body
-// (#F5EFDD), red headstock (#D62828), tan wooden neck (#B8956F),
-// steel tuning pegs, skull knobs on the pickguard, black leather
-// strap fragment off the upper horn.
+// Guitar visual — vector-traced frames of the user's hand-drawn
+// guitar (idle + two strum frames), rotated to sit horizontally.
 // ---------------------------------------------------------------
-const STRING_WIDTHS = [3.0, 2.6, 2.2, 1.8, 1.4, 1.1];
-const STRING_COLORS = ['#B8860B', '#B8860B', '#C0C0C0', '#C0C0C0', '#C0C0C0', '#C0C0C0'];
-
-function SkullKnob({ cx, cy }) {
-  return (
-    <g>
-      {/* Skull head */}
-      <circle cx={cx} cy={cy} r="6.5" fill="#C4C4C4" stroke="#000" strokeWidth="1.4" />
-      {/* Eye sockets */}
-      <ellipse cx={cx - 2.3} cy={cy - 1.2} rx="1.4" ry="1.6" fill="#000" />
-      <ellipse cx={cx + 2.3} cy={cy - 1.2} rx="1.4" ry="1.6" fill="#000" />
-      {/* Jaw slit */}
-      <line x1={cx - 2.5} y1={cy + 2.5} x2={cx + 2.5} y2={cy + 2.5} stroke="#000" strokeWidth="1.1" strokeLinecap="round" />
-      {/* Tooth notch */}
-      <line x1={cx} y1={cy + 1.8} x2={cx} y2={cy + 3.5} stroke="#000" strokeWidth="0.7" />
-    </g>
-  );
-}
-
-function GuitarStrings({ vibratingStrings }) {
-  // String Y positions — 6 strings evenly spaced, running parallel
-  // across the fretboard and body. Low E on top (visually higher in
-  // the SVG) because the guitar is drawn with the neck angled
-  // slightly toward the viewer's right, which is how kids
-  // instinctively read left→right = low→high.
-  const stringYs = [82, 94, 106, 118, 130, 142];
-  const nutX = 78;
-  const bridgeX = 452;
-
+function GuitarArt({ frame }) {
   return (
     <svg
-      viewBox="0 0 500 200"
+      viewBox={GUITAR_VIEWBOX}
       preserveAspectRatio="xMidYMid meet"
-      className="w-full h-28 md:h-40"
+      className="w-full h-36 md:h-60"
       aria-hidden="true"
     >
-      {/* Strap fragment coming off the upper-body horn — decorative,
-          matches the black leather strap in the reference. */}
-      <path
-        d="M 255 62 C 248 30, 232 10, 218 20 L 236 62 Z"
-        fill="#2A2A2A"
-        stroke="#000"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-      <circle cx="252" cy="68" r="4" fill="#999" stroke="#000" strokeWidth="1.5" />
-
-      {/* Tele body — cream, thick black outline, single upper
-          cutaway to accommodate the neck join. Right lower bout is
-          the classic Tele slab shape. */}
-      <path
-        d="
-          M 258 64
-          C 258 55, 262 50, 268 50
-          L 290 46
-          C 350 42, 460 44, 470 68
-          C 484 96, 484 130, 468 160
-          C 456 178, 340 182, 290 178
-          L 258 172
-          C 248 168, 240 158, 244 146
-          L 258 138
-          L 258 100
-          L 240 88
-          C 232 82, 232 72, 244 68
-          Z
-        "
-        fill="#F5EFDD"
-        stroke="#000"
-        strokeWidth="3"
-        strokeLinejoin="round"
-      />
-
-      {/* White pickguard covering the pickup + knobs area of the body */}
-      <path
-        d="
-          M 320 68
-          L 460 74
-          C 468 92, 468 130, 458 158
-          L 328 168
-          C 310 160, 302 138, 308 108
-          C 310 88, 314 76, 320 68
-          Z
-        "
-        fill="#FDFDFC"
-        stroke="#000"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-
-      {/* Wooden fretboard — tan, chunky outline */}
-      <rect x="78" y="76" width="180" height="72" fill="#B8956F" stroke="#000" strokeWidth="2.2" rx="1" />
-
-      {/* Frets — cross-lines on the fretboard */}
-      {[100, 122, 144, 166, 188, 210, 232].map((x, i) => (
-        <line key={i} x1={x} y1="78" x2={x} y2="146" stroke="#5A4530" strokeWidth="1.6" strokeLinecap="round" />
-      ))}
-      {/* Inlay dots (fret markers) at frets 3, 5, 7, 9 */}
-      {[133, 177].map((x, i) => (
-        <circle key={i} cx={x} cy="112" r="2.2" fill="#F0E5C8" opacity="0.85" />
-      ))}
-
-      {/* Nut — bone/plastic ridge between headstock and fretboard */}
-      <rect x="74" y="74" width="5" height="76" fill="#F0F0F0" stroke="#000" strokeWidth="1.2" />
-
-      {/* Red Tele-style headstock (paddle shape) */}
-      <path
-        d="
-          M 4 82
-          C 4 74, 10 68, 20 66
-          L 66 60
-          C 74 58, 78 66, 78 74
-          L 78 150
-          C 78 158, 72 164, 62 164
-          L 22 156
-          C 10 152, 4 146, 4 138
-          Z
-        "
-        fill="#D62828"
-        stroke="#000"
-        strokeWidth="2.5"
-        strokeLinejoin="round"
-      />
-
-      {/* 6 tuning pegs — 6-inline Tele style, staggered down the
-          headstock. Each = a chrome cap on top and a small button. */}
-      {stringYs.map((y, i) => {
-        const pegX = 20 + (i % 2) * 10; // slight zigzag for authenticity
-        return (
-          <g key={i}>
-            {/* String post (small cylinder poking through the headstock) */}
-            <circle cx={pegX} cy={y} r="3.4" fill="#DDD" stroke="#222" strokeWidth="0.9" />
-            {/* Tuning key (side wing) */}
-            <rect x={pegX - 8} y={y - 1.8} width="7" height="3.6" fill="#C8C8C8" stroke="#000" strokeWidth="0.9" rx="1" />
-            <circle cx={pegX - 8} cy={y} r="1.6" fill="#333" />
-          </g>
-        );
-      })}
-
-      {/* Pickup — chunky black humbucker-ish rectangle with 6 pole
-          pieces (matches user's reference). */}
-      <rect x="376" y="80" width="30" height="80" fill="#1A1A1A" stroke="#000" strokeWidth="1.8" rx="1.5" />
-      <rect x="380" y="84" width="22" height="72" fill="#2E2E2E" rx="0.8" />
-      {stringYs.map((y, i) => (
-        <circle key={i} cx="391" cy={y} r="2.8" fill="#7A7A7A" stroke="#333" strokeWidth="0.5" />
-      ))}
-
-      {/* Bridge saddles on the far right */}
-      <rect x="438" y="82" width="22" height="72" fill="#B0B0B0" stroke="#000" strokeWidth="1.6" rx="1" />
-      {stringYs.map((y, i) => (
-        <rect key={i} x="442" y={y - 2.5} width="14" height="5" fill="#666" stroke="#333" strokeWidth="0.5" rx="0.8" />
-      ))}
-
-      {/* 2 skull knobs on the pickguard (matches reference) */}
-      <SkullKnob cx={430} cy={168} />
-      <SkullKnob cx={452} cy={175} />
-
-      {/* Output jack (small notch on the body's side) */}
-      <rect x="472" y="118" width="10" height="10" fill="#666" stroke="#000" strokeWidth="1.4" rx="1.5" />
-
-      {/* -------- 6 STRINGS --------
-          Two segments per string:
-          (a) STATIC — tuning peg to nut (short, angled to converge)
-          (b) ANIMATED — nut to bridge (long, wobbles on strum) */}
-      {stringYs.map((y, i) => {
-        const pegX = 20 + (i % 2) * 10;
-        const w = STRING_WIDTHS[i];
-        const color = STRING_COLORS[i];
-        const vibrating = vibratingStrings.has(i);
-        const nutY = y;
-        const bridgeY = y;
-        const basePath = `M ${nutX} ${nutY} L ${bridgeX} ${bridgeY}`;
-        return (
-          <g key={i}>
-            {/* Peg → nut convergence line (static, thin) */}
-            <line
-              x1={pegX + 3.4}
-              y1={y}
-              x2={nutX}
-              y2={nutY}
-              stroke={color}
-              strokeWidth={Math.max(1, w * 0.7)}
-              strokeLinecap="round"
-              opacity="0.9"
-            />
-            {/* Nut → bridge (animated) */}
-            <motion.path
-              d={basePath}
-              stroke={color}
-              strokeWidth={w}
-              fill="none"
-              strokeLinecap="round"
-              animate={vibrating ? {
-                d: [
-                  basePath,
-                  `M ${nutX} ${nutY} Q ${(nutX + bridgeX) / 2} ${bridgeY - 6} ${bridgeX} ${bridgeY}`,
-                  `M ${nutX} ${nutY} Q ${(nutX + bridgeX) / 2} ${bridgeY + 5} ${bridgeX} ${bridgeY}`,
-                  `M ${nutX} ${nutY} Q ${(nutX + bridgeX) / 2} ${bridgeY - 3} ${bridgeX} ${bridgeY}`,
-                  `M ${nutX} ${nutY} Q ${(nutX + bridgeX) / 2} ${bridgeY + 2} ${bridgeX} ${bridgeY}`,
-                  basePath,
-                ],
-              } : { d: basePath }}
-              transition={vibrating
-                ? { duration: 0.9, ease: 'easeOut', times: [0, 0.08, 0.22, 0.42, 0.7, 1] }
-                : { duration: 0.2 }}
-            />
-          </g>
-        );
-      })}
+      <g transform={GUITAR_ROTATE} dangerouslySetInnerHTML={{ __html: GUITAR_FRAMES[frame] }} />
     </svg>
   );
 }
@@ -413,26 +204,15 @@ export default function GuitarInstrument({ getAudioGraph, initAudioContext, onPl
   const activeVoicesRef = useRef(new Map());
   const [heldIds, setHeldIds] = useState(new Set());
 
-  // Which of the 6 visual strings are currently vibrating. Auto
-  // clears after ~1s per string. Managed via a Map<stringIdx, timeoutId>.
-  const [vibratingStrings, setVibratingStrings] = useState(new Set());
-  const vibrateTimeoutsRef = useRef(new Map());
-  const triggerStrings = useCallback((stringIndices, staggerMs = 22) => {
-    stringIndices.forEach((si, i) => {
-      setTimeout(() => {
-        setVibratingStrings(prev => new Set(prev).add(si));
-        const prevTimeout = vibrateTimeoutsRef.current.get(si);
-        if (prevTimeout) clearTimeout(prevTimeout);
-        const timeout = setTimeout(() => {
-          setVibratingStrings(prev => {
-            const n = new Set(prev);
-            n.delete(si);
-            return n;
-          });
-          vibrateTimeoutsRef.current.delete(si);
-        }, 900);
-        vibrateTimeoutsRef.current.set(si, timeout);
-      }, i * staggerMs);
+  // Strum animation: flip between the two strum frames, then idle.
+  const [frame, setFrame] = useState(0);
+  const strumTimersRef = useRef([]);
+  const triggerStrings = useCallback(() => {
+    strumTimersRef.current.forEach(clearTimeout);
+    strumTimersRef.current = [];
+    const steps = [1, 2, 1, 2, 1, 2, 1, 0];
+    steps.forEach((f, i) => {
+      strumTimersRef.current.push(setTimeout(() => setFrame(f), i * 75));
     });
   }, []);
 
@@ -464,7 +244,6 @@ export default function GuitarInstrument({ getAudioGraph, initAudioContext, onPl
 
     const isCrunch = toneRef.current === 'crunch';
     const freqs = isCrunch ? chord.powerFreqs : chord.fullFreqs;
-    const stringIndices = isCrunch ? chord.powerStrings : chord.fullStrings;
     const baseLevel = 0.60; // brought up from v5's 0.35
 
     const voices = freqs.map((freq, i) =>
@@ -480,7 +259,7 @@ export default function GuitarInstrument({ getAudioGraph, initAudioContext, onPl
     if (voices.length === 0) return;
     activeVoicesRef.current.set(chord.id, voices);
     setHeldIds(prev => new Set(prev).add(chord.id));
-    triggerStrings(stringIndices, 22);
+    triggerStrings();
     if (onPlay) onPlay({ type: 'guitar-chord', chord: chord.id });
   }, [initAudioContext, getAudioGraph, onPlay, triggerStrings]);
 
@@ -513,7 +292,7 @@ export default function GuitarInstrument({ getAudioGraph, initAudioContext, onPl
     if (!voice) return;
     activeVoicesRef.current.set(id, [voice]);
     setHeldIds(prev => new Set(prev).add(id));
-    triggerStrings([note.string], 0);
+    triggerStrings();
     if (onPlay) onPlay({ type: 'guitar-note', note: note.label });
   }, [initAudioContext, getAudioGraph, onPlay, triggerStrings]);
 
@@ -533,8 +312,7 @@ export default function GuitarInstrument({ getAudioGraph, initAudioContext, onPl
   useEffect(() => () => {
     activeVoicesRef.current.forEach(voices => voices.forEach(v => v.release()));
     activeVoicesRef.current.clear();
-    vibrateTimeoutsRef.current.forEach(id => clearTimeout(id));
-    vibrateTimeoutsRef.current.clear();
+    strumTimersRef.current.forEach(clearTimeout);
   }, []);
 
   // Keyboard bindings.
@@ -638,7 +416,7 @@ export default function GuitarInstrument({ getAudioGraph, initAudioContext, onPl
           boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.15)',
         }}
       >
-        <GuitarStrings vibratingStrings={vibratingStrings} />
+        <GuitarArt frame={frame} />
         {/* Crunch mode indicator — small "POWER" badge in the corner
             so kids see WHY chords sound different from full ones. */}
         <AnimatePresence>
