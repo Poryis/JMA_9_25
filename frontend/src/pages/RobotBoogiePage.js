@@ -1291,10 +1291,18 @@ export default function RobotBoogiePage() {
             // this zone shrink freely so the waiting-area lineup at
             // the bottom is guaranteed to stay on-screen — even on
             // short phones or landscape orientation.
-            // No hard minHeight — characters gracefully overflow-hide
-            // if the viewport is genuinely too small, but the LINEUP
-            // never disappears. This was the whole point of the fix.
-            overflow: 'hidden',
+            //
+            // overflow: visible so a tall solo character (n=1, 55%
+            // wide → 4/3 aspect ratio derives ~1.3× the wrapper's
+            // width in height) can peek UPWARD past the band edge
+            // without getting its head clipped. Each character
+            // wrapper below carries its own `maxHeight: 100%` +
+            // aspect-ratio, so the browser will shrink both width
+            // AND height proportionally when the band is squeezed —
+            // but if the shrink doesn't quite finish (browser
+            // rounding, or a tall solo hero), letting heads bleed
+            // over the top is FAR better than cropping them.
+            overflow: 'visible',
           }}
         >
           {activeChars.length === 0 ? (
@@ -1362,6 +1370,17 @@ export default function RobotBoogiePage() {
                     style={{
                       width: widthPct,
                       maxWidth: maxW,
+                      // `maxHeight: 100%` + `aspectRatio: 3/4` combo
+                      // lets the browser shrink BOTH dimensions
+                      // proportionally when the active band is
+                      // squeezed vertically (short phone / landscape).
+                      // Without this, a solo character at n=1 (width
+                      // 55%) derives a height ~4/3 wider than tall,
+                      // which on a compressed band clipped heads at
+                      // the top. With aspect-ratio + max-height set,
+                      // characters scale down to fit inside the band.
+                      maxHeight: '100%',
+                      aspectRatio: '3 / 4',
                       marginLeft: `-${negPx}px`,
                       marginRight: `-${negPx}px`,
                       // Wrapper is pointer-events: none so its overlapping
