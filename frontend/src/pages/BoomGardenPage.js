@@ -1033,7 +1033,7 @@ export default function BoomGardenPage() {
                 WebkitTextStroke: 'clamp(2px, 0.45vw, 4px) var(--jma-dark)',
                 paintOrder: 'stroke fill',
                 textShadow:
-                  '3px 3px 0 var(--jma-dark), 6px 6px 0 #C0392B, 9px 9px 20px rgba(10,37,64,0.35)',
+                  '3px 3px 0 var(--jma-dark), 6px 6px 20px rgba(10,37,64,0.35)',
                 letterSpacing: '0.02em',
               }}
             >
