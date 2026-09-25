@@ -30,18 +30,18 @@ function nearestSample(target) {
 }
 
 const CHORDS = [
-  { id: 'Am', label: 'Am', color: '#E74C3C', key: '1',
-    fullFreqs: [110.00, 164.81, 220.00, 261.63, 329.63, 440.00], powerFreqs: [110.00, 164.81, 220.00] },
-  { id: 'Dm', label: 'Dm', color: '#3498DB', key: '2',
-    fullFreqs: [146.83, 220.00, 293.66, 349.23, 440.00, 587.33], powerFreqs: [146.83, 220.00, 293.66] },
-  { id: 'Em', label: 'Em', color: '#9B59B6', key: '3',
+  { id: 'Em', label: 'Em', color: '#9B59B6', key: '1',
     fullFreqs: [ 82.41, 123.47, 164.81, 196.00, 246.94, 329.63], powerFreqs: [ 82.41, 123.47, 164.81] },
-  { id: 'G',  label: 'G',  color: '#27AE60', key: '4',
+  { id: 'F',  label: 'F',  color: '#E67E22', key: '2',
+    fullFreqs: [ 87.31, 130.81, 174.61, 220.00, 261.63, 349.23], powerFreqs: [ 87.31, 130.81, 174.61] },
+  { id: 'G',  label: 'G',  color: '#27AE60', key: '3',
     fullFreqs: [ 98.00, 123.47, 146.83, 196.00, 246.94, 392.00], powerFreqs: [ 98.00, 146.83, 196.00] },
+  { id: 'Am', label: 'Am', color: '#E74C3C', key: '4',
+    fullFreqs: [110.00, 164.81, 220.00, 261.63, 329.63, 440.00], powerFreqs: [110.00, 164.81, 220.00] },
   { id: 'C',  label: 'C',  color: '#F1C40F', key: '5',
     fullFreqs: [130.81, 164.81, 196.00, 261.63, 329.63, 392.00], powerFreqs: [130.81, 196.00, 261.63] },
-  { id: 'F',  label: 'F',  color: '#E67E22', key: '6',
-    fullFreqs: [ 87.31, 130.81, 174.61, 220.00, 261.63, 349.23], powerFreqs: [ 87.31, 130.81, 174.61] },
+  { id: 'Dm', label: 'Dm', color: '#3498DB', key: '6',
+    fullFreqs: [146.83, 220.00, 293.66, 349.23, 440.00, 587.33], powerFreqs: [146.83, 220.00, 293.66] },
 ];
 
 const NOTES = [
@@ -58,14 +58,6 @@ const NOTES = [
   { label: 'A', freq: 880.00, key: '-' },
 ];
 const NOTE_COLORS = ['#E74C3C', '#E67E22', '#F1C40F', '#27AE60', '#0FA3B1', '#3498DB', '#5E60CE', '#9B59B6', '#C71585', '#E74C3C', '#E67E22'];
-const MAX_NOTE_POS = NOTES.length - 6;
-
-// Chord voicing across the 6 drawn strings (top string = index 0 = lowest).
-function chordStringFreqs(chord, crunch) {
-  if (!crunch) return chord.fullFreqs;
-  return [...chord.powerFreqs, ...chord.powerFreqs.map(f => f * 2)];
-}
-
 // ---------------------------------------------------------------
 // Sample cache + voice
 // ---------------------------------------------------------------
@@ -85,7 +77,7 @@ async function loadSample(ctx, tone, file) {
   }
 }
 
-function makeVoice({ ctx, destination, tone, freq, startAt = 0, level = 1.0 }) {
+function makeVoice({ ctx, destination, tone, freq, startAt = 0, level = 1.0, ring = 3.5 }) {
   const s = nearestSample(freq);
   const buffer = bufferCache.get(`${tone}:${s.file}`);
   if (!buffer) return null;
@@ -96,10 +88,14 @@ function makeVoice({ ctx, destination, tone, freq, startAt = 0, level = 1.0 }) {
   const g = ctx.createGain();
   g.gain.setValueAtTime(0, t0);
   g.gain.linearRampToValueAtTime(level, t0 + 0.003);
+  if (ring < 3.5) {
+    g.gain.setValueAtTime(level, t0 + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + ring);
+  }
   src.connect(g);
   g.connect(destination);
   src.start(t0);
-  src.stop(t0 + 3.5);
+  src.stop(t0 + ring + 0.05);
   return {
     released: false,
     release() {
@@ -118,13 +114,17 @@ function makeVoice({ ctx, destination, tone, freq, startAt = 0, level = 1.0 }) {
 // Guitar art — traced frames + strap pins + strum zone + pick.
 // String geometry measured in viewBox coords on the rotated drawing.
 // ---------------------------------------------------------------
-const STRING_TOP_Y = 428;
-const STRING_GAP = 11.4;
-const ZONE = { x1: 150, x2: 480, y1: 404, y2: 508 };
+// Playable strip along the strings (viewBox coords). Headstock side
+// (right, x≈894 nut) = lowest pitch; bridge side (left, x≈163) = highest.
+const NUT_X = 894;
+const BRIDGE_X = 163;
+const STRIP_Y1 = 392;
+const STRIP_Y2 = 522;
 
-function stringAt(x, y) {
-  if (x < ZONE.x1 || x > ZONE.x2 || y < ZONE.y1 || y > ZONE.y2) return null;
-  return Math.max(0, Math.min(5, Math.round((y - STRING_TOP_Y) / STRING_GAP)));
+function zoneAt(x, y, count) {
+  if (y < STRIP_Y1 || y > STRIP_Y2) return null;
+  const t = Math.max(0, Math.min(0.999, (NUT_X - x) / (NUT_X - BRIDGE_X)));
+  return Math.floor(t * count);
 }
 
 function StrapPin({ x, y, angle }) {
@@ -142,11 +142,19 @@ const GuitarFrame = memo(function GuitarFrame({ html, visible }) {
 
 const PICK_PATH = 'M 0 -16 C 12 -16, 16 -8, 14 0 C 11 12, 4 20, 0 22 C -4 20, -11 12, -14 0 C -16 -8, -12 -16, 0 -16 Z';
 
-function Pick({ x, y }) {
+function Pick({ x, y, label }) {
   return (
-    <g transform={`translate(${x} ${y}) rotate(-20)`} pointerEvents="none">
-      <path d={PICK_PATH} fill="var(--jma-yellow)" stroke="#000" strokeWidth="2.5" strokeLinejoin="round" />
-      <circle cx="0" cy="-4" r="3" fill="#000" opacity="0.25" />
+    <g transform={`translate(${x} ${y})`} pointerEvents="none">
+      <g transform="rotate(-20)">
+        <path d={PICK_PATH} fill="var(--jma-yellow)" stroke="#000" strokeWidth="2.5" strokeLinejoin="round" />
+        <circle cx="0" cy="-4" r="3" fill="#000" opacity="0.25" />
+      </g>
+      {label && (
+        <g transform="translate(0 -40)">
+          <rect x="-22" y="-16" width="44" height="30" rx="8" fill="#fff" stroke="#000" strokeWidth="2.5" />
+          <text x="0" y="6" textAnchor="middle" fontSize="20" fontWeight="900" fill="#1B1B24" fontFamily="inherit">{label}</text>
+        </g>
+      )}
     </g>
   );
 }
@@ -175,15 +183,15 @@ function GuitarArt({ frame, pick, sweepId, svgRef, onPointerDown, onPointerMove,
       {sweepId > 0 && (
         <motion.g
           key={sweepId}
-          initial={{ y: ZONE.y1 - 6, opacity: 1 }}
-          animate={{ y: [ZONE.y1 - 6, ZONE.y2 + 6, ZONE.y2 + 6], opacity: [1, 1, 0] }}
+          initial={{ y: STRIP_Y1 - 6, opacity: 1 }}
+          animate={{ y: [STRIP_Y1 - 6, STRIP_Y2 + 6, STRIP_Y2 + 6], opacity: [1, 1, 0] }}
           transition={{ duration: 0.36, times: [0, 0.5, 1], ease: 'easeIn' }}
           pointerEvents="none"
         >
           <Pick x={300} y={0} />
         </motion.g>
       )}
-      {pick && <Pick x={pick.x} y={pick.y} />}
+      {pick && <Pick x={pick.x} y={pick.y} label={pick.label} />}
     </svg>
   );
 }
@@ -195,8 +203,6 @@ export default function GuitarInstrument({ getAudioGraph, initAudioContext, onPl
   const [mode, setMode] = useState('notes');
   const [tone, setTone] = useState('crunch');
   const [ready, setReady] = useState({ clean: false, crunch: false });
-  const [selectedChord, setSelectedChord] = useState('Am');
-  const [notePos, setNotePos] = useState(0);
   const [heldIds, setHeldIds] = useState(new Set());
   const [frame, setFrame] = useState(0);
   const [pick, setPick] = useState(null);
@@ -204,11 +210,10 @@ export default function GuitarInstrument({ getAudioGraph, initAudioContext, onPl
 
   const toneRef = useRef(tone); toneRef.current = tone;
   const modeRef = useRef(mode); modeRef.current = mode;
-  const selectedChordRef = useRef(selectedChord); selectedChordRef.current = selectedChord;
-  const notePosRef = useRef(notePos); notePosRef.current = notePos;
 
   const activeVoicesRef = useRef(new Map());
-  const stringVoicesRef = useRef(new Map());
+  const guitarVoicesRef = useRef([]);
+  const guitarHeldRef = useRef(null);
   const strumTimersRef = useRef([]);
   const svgRef = useRef(null);
   const dragRef = useRef({ active: false, last: null });
@@ -240,7 +245,6 @@ export default function GuitarInstrument({ getAudioGraph, initAudioContext, onPl
   const startChord = useCallback((chord) => {
     const graph = graphOrNull();
     if (!graph) return;
-    setSelectedChord(chord.id);
     const prev = activeVoicesRef.current.get(chord.id);
     if (prev) prev.forEach(v => v.release());
     const isCrunch = toneRef.current === 'crunch';
@@ -266,7 +270,6 @@ export default function GuitarInstrument({ getAudioGraph, initAudioContext, onPl
   const startNote = useCallback((note, idx) => {
     const graph = graphOrNull();
     if (!graph) return;
-    setNotePos(Math.min(idx, MAX_NOTE_POS));
     const id = `note-${idx}`;
     const prev = activeVoicesRef.current.get(id);
     if (prev) prev.forEach(v => v.release());
@@ -285,25 +288,51 @@ export default function GuitarInstrument({ getAudioGraph, initAudioContext, onPl
     setHeldIds(prev => { if (!prev.has(id)) return prev; const n = new Set(prev); n.delete(id); return n; });
   }, []);
 
-  // ---- strumming the drawn strings ----
-  const playString = useCallback((i) => {
+  // ---- playing the drawn guitar: x along the neck picks the pitch ----
+  const setGuitarHeld = useCallback((id) => {
+    const prev = guitarHeldRef.current;
+    if (prev === id) return;
+    guitarHeldRef.current = id;
+    setHeldIds(h => {
+      const n = new Set(h);
+      if (prev) n.delete(prev);
+      if (id) n.add(id);
+      return n;
+    });
+  }, []);
+
+  const releaseGuitarVoices = useCallback(() => {
+    guitarVoicesRef.current.forEach(v => v.release());
+    guitarVoicesRef.current = [];
+  }, []);
+
+  const playZone = useCallback((zone) => {
     const graph = graphOrNull();
-    if (!graph) return;
-    let freq;
+    if (!graph) return null;
+    releaseGuitarVoices();
+    const common = { ctx: graph.ctx, destination: graph.masterNode, tone: toneRef.current };
+    let label, heldId;
     if (modeRef.current === 'chords') {
-      const chord = CHORDS.find(c => c.id === selectedChordRef.current) || CHORDS[0];
-      freq = chordStringFreqs(chord, toneRef.current === 'crunch')[i];
+      const chord = CHORDS[zone];
+      const freqs = toneRef.current === 'crunch' ? chord.powerFreqs : chord.fullFreqs;
+      guitarVoicesRef.current = freqs.map((freq, i) =>
+        makeVoice({ ...common, freq, startAt: i * 0.02, level: 0.55 - i * 0.02, ring: 1.8 })
+      ).filter(Boolean);
+      label = chord.label + (toneRef.current === 'crunch' ? '5' : '');
+      heldId = chord.id;
+      if (onPlay) onPlay({ type: 'guitar-chord', chord: chord.id });
     } else {
-      freq = NOTES[notePosRef.current + i].freq;
+      const note = NOTES[zone];
+      const v = makeVoice({ ...common, freq: note.freq, level: 0.85, ring: 1.6 });
+      guitarVoicesRef.current = v ? [v] : [];
+      label = note.label;
+      heldId = `note-${zone}`;
+      if (onPlay) onPlay({ type: 'guitar-note', note: note.label });
     }
-    const prev = stringVoicesRef.current.get(i);
-    if (prev) prev.release();
-    const voice = makeVoice({ ctx: graph.ctx, destination: graph.masterNode, tone: toneRef.current, freq, level: 0.75 });
-    if (!voice) return;
-    stringVoicesRef.current.set(i, voice);
+    setGuitarHeld(heldId);
     triggerStrings();
-    if (onPlay) onPlay({ type: 'guitar-string', string: i });
-  }, [graphOrNull, onPlay, triggerStrings]);
+    return label;
+  }, [graphOrNull, onPlay, triggerStrings, releaseGuitarVoices, setGuitarHeld]);
 
   const svgPoint = useCallback((e) => {
     const svg = svgRef.current;
@@ -316,42 +345,42 @@ export default function GuitarInstrument({ getAudioGraph, initAudioContext, onPl
     return { x: p.x, y: p.y };
   }, []);
 
+  const zoneCount = () => (modeRef.current === 'chords' ? CHORDS.length : NOTES.length);
+
   const onArtDown = useCallback((e) => {
     const p = svgPoint(e);
     if (!p) return;
     e.preventDefault();
     try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {}
-    dragRef.current = { active: true, last: null };
-    setPick(p);
-    const idx = stringAt(p.x, p.y);
-    if (idx !== null) { playString(idx); dragRef.current.last = idx; }
-  }, [svgPoint, playString]);
+    const zone = zoneAt(p.x, p.y, zoneCount());
+    dragRef.current = { active: true, last: zone };
+    const label = zone === null ? null : playZone(zone);
+    setPick({ ...p, label });
+  }, [svgPoint, playZone]);
 
   const onArtMove = useCallback((e) => {
     if (!dragRef.current.active) return;
     const p = svgPoint(e);
     if (!p) return;
-    setPick(p);
-    const idx = stringAt(p.x, p.y);
-    const last = dragRef.current.last;
-    if (idx === null) { dragRef.current.last = null; return; }
-    if (last === null) { playString(idx); dragRef.current.last = idx; return; }
-    if (idx === last) return;
-    const step = idx > last ? 1 : -1;
-    for (let s = last + step; s !== idx + step; s += step) playString(s);
-    dragRef.current.last = idx;
-  }, [svgPoint, playString]);
+    const zone = zoneAt(p.x, p.y, zoneCount());
+    if (zone !== null && zone !== dragRef.current.last) {
+      dragRef.current.last = zone;
+      setPick({ ...p, label: playZone(zone) });
+    } else {
+      setPick(prev => ({ ...p, label: zone === null ? null : (prev && prev.label) }));
+    }
+  }, [svgPoint, playZone]);
 
   const onArtUp = useCallback(() => {
     dragRef.current = { active: false, last: null };
     setPick(null);
-  }, []);
+    setGuitarHeld(null);
+  }, [setGuitarHeld]);
 
   useEffect(() => () => {
     activeVoicesRef.current.forEach(voices => voices.forEach(v => v.release()));
     activeVoicesRef.current.clear();
-    stringVoicesRef.current.forEach(v => v.release());
-    stringVoicesRef.current.clear();
+    guitarVoicesRef.current.forEach(v => v.release());
     strumTimersRef.current.forEach(clearTimeout);
   }, []);
 
@@ -424,13 +453,11 @@ export default function GuitarInstrument({ getAudioGraph, initAudioContext, onPl
         <div data-testid="guitar-chord-grid" className="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-3">
           {CHORDS.map((chord) => {
             const held = heldIds.has(chord.id);
-            const selected = selectedChord === chord.id;
             return (
               <motion.button
                 key={chord.id}
                 type="button"
                 data-testid={`guitar-chord-${chord.id}`}
-                data-selected={selected ? 'true' : 'false'}
                 onPointerDown={(e) => { e.preventDefault(); startChord(chord); }}
                 onPointerUp={() => stopChord(chord.id)}
                 onPointerLeave={() => stopChord(chord.id)}
@@ -440,8 +467,6 @@ export default function GuitarInstrument({ getAudioGraph, initAudioContext, onPl
                   background: `linear-gradient(180deg, ${chord.color} 0%, ${chord.color}CC 100%)`,
                   borderColor: '#000',
                   boxShadow: held ? '0 1px 0 0 #000' : '0 4px 0 0 #000',
-                  outline: selected ? '3px solid #fff' : '3px solid transparent',
-                  outlineOffset: '2px',
                   color: 'white',
                 }}
                 animate={{ scale: held ? 0.96 : 1, y: held ? 3 : 0 }}
