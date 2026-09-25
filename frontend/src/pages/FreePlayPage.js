@@ -12,6 +12,8 @@ import { earnSticker, earnAchievement, earnAchievementUpTo } from '../hooks/useS
 import { SONG_LIBRARY } from '../data/songs';
 import useAudio from '../hooks/useAudio';
 import useMp3Recorder from '../hooks/useMp3Recorder';
+import useBeatLoopPlayer from '../hooks/useBeatLoopPlayer';
+import { loadSavedBeats } from '../hooks/useSavedBeats';
 
 const GUIDED_SONGS = [
   { name: 'Do Re Mi', notes: ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'High C'] },
@@ -395,7 +397,8 @@ function DrumKitPlayable({ onDrumDown, onDrumUp, registerDrumRef }) {
 // JamAlongControls: tiny dropdown to pick a JMA Original backing track to jam to.
 // Plays the song while the kid plays any instrument on top.
 // ============================================================================
-function JamAlongControls({ jamTrackId, onPick, audioRef, getAudioGraph }) {
+function JamAlongControls({ jamTrackId, onPick, audioRef, getAudioGraph, beatPlayer }) {
+  const [beats, setBeats] = useState(() => loadSavedBeats());
   const [open, setOpen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const sourceWiredRef = useRef(false);
@@ -438,6 +441,12 @@ function JamAlongControls({ jamTrackId, onPick, audioRef, getAudioGraph }) {
     };
   }, [audioRef, jamTrackId]);
 
+  const handlePickBeat = (beat) => {
+    onPick(`beat:${beat.id}`);
+    setOpen(false);
+    beatPlayer.start(beat);
+  };
+
   const handlePick = (id) => {
     wireSourceIfNeeded();
     onPick(id);
@@ -455,10 +464,13 @@ function JamAlongControls({ jamTrackId, onPick, audioRef, getAudioGraph }) {
   const handleStop = () => {
     const a = audioRef.current;
     if (a) { a.pause(); a.currentTime = 0; }
+    beatPlayer.stop();
     onPick(null);
   };
 
-  const current = jamSongs.find(s => s.id === jamTrackId);
+  const currentBeat = beats.find(b => `beat:${b.id}` === jamTrackId);
+  const current = currentBeat || jamSongs.find(s => s.id === jamTrackId);
+  const nowPlaying = currentBeat ? beatPlayer.playingId === currentBeat.id : isPlaying;
 
   return (
     <div className="relative">
@@ -466,7 +478,7 @@ function JamAlongControls({ jamTrackId, onPick, audioRef, getAudioGraph }) {
         <button
           data-testid="jam-along-toggle"
           className="chunky-btn bg-[var(--jma-yellow)] text-[var(--jma-dark)] px-2 py-0.5 md:py-1 flex items-center gap-1 text-[10px] md:text-xs font-bold touch-manipulation"
-          onClick={() => setOpen(o => !o)}
+          onClick={() => { setBeats(loadSavedBeats()); setOpen(o => !o); }}
         >
           <Headphones className="w-3 h-3" /> Play a Song
         </button>
@@ -480,7 +492,7 @@ function JamAlongControls({ jamTrackId, onPick, audioRef, getAudioGraph }) {
             <Square className="w-3 h-3 fill-current" /> Stop
           </button>
           <span className="text-xs font-bold max-w-[120px] truncate" style={{ color: 'var(--jma-dark)' }}>
-            {isPlaying ? '🎶 ' : ''}{current.name}
+            {nowPlaying ? '🎶 ' : ''}{current.name}
           </span>
         </div>
       )}
@@ -501,6 +513,22 @@ function JamAlongControls({ jamTrackId, onPick, audioRef, getAudioGraph }) {
               {s.name}
             </button>
           ))}
+          {beats.length > 0 && (
+            <>
+              <p className="text-[10px] font-bold uppercase tracking-wide opacity-60 mt-2 mb-1 px-1 border-t border-black/10 pt-2">My Beats (from Beat Lab)</p>
+              {beats.map(b => (
+                <button
+                  key={b.id}
+                  data-testid={`jam-pick-beat-${b.id}`}
+                  onClick={() => handlePickBeat(b)}
+                  className="block w-full text-left px-2 py-1.5 rounded-lg text-sm font-bold hover:bg-[var(--jma-yellow)]/30 touch-manipulation"
+                  style={{ color: 'var(--jma-dark)' }}
+                >
+                  {b.name} <span className="opacity-50 text-[10px]">{b.bpm} bpm</span>
+                </button>
+              ))}
+            </>
+          )}
         </div>
       )}
     </div>
@@ -510,6 +538,7 @@ function JamAlongControls({ jamTrackId, onPick, audioRef, getAudioGraph }) {
 function FreePlayPage() {
   const { playBellNote, playDrumSound, initAudioContext, getAudioGraph } = useAudio();
   const recorder = useMp3Recorder(getAudioGraph);
+  const beatPlayer = useBeatLoopPlayer({ playBellNote, playDrumSound, initAudioContext });
 
   const [particles, setParticles] = useState([]);
   const [streak, setStreak] = useState(0);
@@ -841,6 +870,7 @@ function FreePlayPage() {
             onPick={(id) => setJamTrackId(id)}
             audioRef={jamAudioRef}
             getAudioGraph={getAudioGraph}
+            beatPlayer={beatPlayer}
           />
           {/* Unified "Capture this Jam" — starts BOTH the in-app note loop
               and the audio MP3 recorder in lockstep. After stopping, an inline

@@ -10,6 +10,7 @@ import useAudio from '../hooks/useAudio';
 import useMp3Recorder from '../hooks/useMp3Recorder';
 import usePlayer from '../hooks/usePlayer';
 import { earnSticker, earnAchievement, earnAchievementUpTo } from '../hooks/useStickers';
+import { saveBeat, loadSavedBeats } from '../hooks/useSavedBeats';
 
 const DEFAULT_BPM = 100;
 
@@ -331,13 +332,15 @@ function LoopStudioPage() {
     setTimeout(() => { setActiveHits(new Set()); }, 100);
   }, [playBellNote, playDrumSound]);
 
-  const togglePlay = useCallback(() => {
+  const stopPlayback = useCallback(() => {
+    clearInterval(intervalRef.current);
+    setIsPlaying(false);
+    setCurrentStep(-1);
+  }, []);
+
+  const startPlayback = useCallback(() => {
     initAudioContext();
-    if (isPlaying) {
-      clearInterval(intervalRef.current);
-      setIsPlaying(false);
-      setCurrentStep(-1);
-    } else {
+    {
       setIsPlaying(true);
       // 🥁 Beat Builder achievement — playing any loop = Cadet
       earnAchievement('beat', 'cadet');
@@ -373,7 +376,39 @@ function LoopStudioPage() {
         playStep(step);
       }, msPerStep);
     }
-  }, [isPlaying, bpm, initAudioContext, playStep]);
+  }, [bpm, initAudioContext, playStep]);
+
+  const togglePlay = useCallback(() => {
+    if (isPlaying) stopPlayback(); else startPlayback();
+  }, [isPlaying, stopPlayback, startPlayback]);
+
+  // REC: start capturing, then auto-play the loop so kids never record silence.
+  const [savedBeatName, setSavedBeatName] = useState(null);
+  const startRecording = useCallback(() => {
+    initAudioContext();
+    setSavedBeatName(null);
+    recorder.start();
+    if (!isPlaying) startPlayback();
+  }, [initAudioContext, recorder, isPlaying, startPlayback]);
+
+  // STOP: halt the loop, finish the MP3, and stash the pattern for Jam Session.
+  const stopRecording = useCallback(async () => {
+    stopPlayback();
+    await recorder.stop();
+    const tracks = activeTracks
+      .filter(id => !mutedRef.current.has(id))
+      .map(id => {
+        const preset = TRACK_PRESETS.find(p => p.id === id);
+        const steps = gridRef.current[id] || [];
+        return preset && steps.some(Boolean) ? { id, type: preset.type, note: preset.note, steps } : null;
+      })
+      .filter(Boolean);
+    if (tracks.length === 0) return;
+    const n = loadSavedBeats().length + 1;
+    const name = `${playerName ? `${playerName}'s ` : ''}Beat ${n}`;
+    saveBeat({ name, bpm, totalSteps: totalStepsRef.current, tracks });
+    setSavedBeatName(name);
+  }, [stopPlayback, recorder, activeTracks, playerName, bpm]);
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -689,7 +724,7 @@ function LoopStudioPage() {
                     border: '2px solid #000',
                     boxShadow: '0 3px 0 rgba(0,0,0,0.55)',
                   }}
-                  onClick={() => { initAudioContext(); recorder.start(); }}
+                  onClick={startRecording}
                   disabled={recorder.isProcessing}
                 >
                   <Circle className="w-3 h-3 fill-current" /> REC
@@ -704,13 +739,18 @@ function LoopStudioPage() {
                     border: '2px solid #FF3B30',
                     boxShadow: '0 3px 0 rgba(0,0,0,0.55)',
                   }}
-                  onClick={async () => { await recorder.stop(); }}
+                  onClick={stopRecording}
                 >
                   <Square className="w-3 h-3 fill-current" /> STOP {recorder.secondsLeft}s
                 </button>
               )}
               {recorder.isProcessing && (
                 <span className="text-[10px] font-bold opacity-70 text-white">Saving...</span>
+              )}
+              {savedBeatName && !recorder.isRecording && !recorder.isProcessing && (
+                <span data-testid="loop-saved-to-jam" className="text-[10px] font-black text-[#4CD964] whitespace-nowrap">
+                  ✓ {savedBeatName} → Jam Session
+                </span>
               )}
               {recorder.lastMp3Url && !recorder.isRecording && !recorder.isProcessing && (
                 <button
