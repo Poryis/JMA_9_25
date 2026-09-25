@@ -1,0 +1,105 @@
+{
+  "theme": "Light",
+  "archetype": "6 (Vibrant Play)",
+  "design_philosophy": "A fun, engaging rhythm game for young children (early elementary). The interface must be bouncy, tactile, colorful, and forgiving. High contrast, large interactive elements, and clear visual feedback. Pure game feel with educational value.",
+  "colors": {
+    "background": "#E0F7FA",
+    "foreground": "#0A2540",
+    "primary": "#FF3B30",
+    "primary_foreground": "#FFFFFF",
+    "secondary": "#FFCC00",
+    "secondary_foreground": "#0A2540",
+    "accent_blue": "#4285F4",
+    "accent_green": "#4CD964",
+    "accent_orange": "#FF9500",
+    "accent_purple": "#AF52DE",
+    "neutral_card": "#FFFFFF",
+    "border": "#0A2540",
+    "bell_colors": {
+      "C_Do": "#FF3B30", 
+      "D_Re": "#FF9500", 
+      "E_Mi": "#FFCC00", 
+      "F_Fa": "#4CD964", 
+      "G_So": "#34A853", 
+      "A_La": "#4285F4", 
+      "B_Ti": "#AF52DE", 
+      "High_C": "#FF2D55"
+    }
+  },
+  "typography": {
+    "font_family": "font-sans",
+    "custom_font": "Import Google Font 'Balsamiq Sans' or 'Fredoka' as a fallback for 'Comic Kings'. Apply it to all headings and primary buttons. CSS: `font-family: 'Comic Kings', 'Balsamiq Sans', cursive;`",
+    "headings": {
+      "h1": "text-5xl md:text-6xl font-black tracking-tight",
+      "h2": "text-3xl md:text-4xl font-black",
+      "h3": "text-2xl md:text-3xl font-bold"
+    },
+    "body": "text-lg md:text-xl font-medium leading-relaxed",
+    "buttons": "text-xl md:text-2xl font-bold uppercase tracking-wider"
+  },
+  "spacing_and_layout": {
+    "container": "max-w-7xl mx-auto px-4 sm:px-6 md:px-8",
+    "generous_spacing": "gap-8 md:gap-12 p-6 md:p-8",
+    "game_board": "relative w-full max-w-4xl mx-auto rounded-3xl overflow-hidden border-8 border-border bg-white shadow-[0_12px_0_0_rgba(10,37,64,1)]",
+    "button_padding": "py-4 px-8"
+  },
+  "components_and_motion": {
+    "bouncy_button": "bg-primary text-white border-4 border-border rounded-full shadow-[0_6px_0_0_rgba(10,37,64,1)] hover:-translate-y-1 hover:shadow-[0_10px_0_0_rgba(10,37,64,1)] active:translate-y-2 active:shadow-none transition-all duration-150",
+    "card": "bg-white border-4 border-border rounded-2xl p-6 shadow-[0_8px_0_0_rgba(10,37,64,1)]",
+    "animations": {
+      "framer_motion_button": "whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.9 }}",
+      "floating_notes": "Use CSS absolute positioning and translateY to animate falling notes.",
+      "feedback_pop": "Scale up and fade out (e.g. 'Perfect!' text popping on screen using Framer Motion initial/animate/exit)."
+    }
+  },
+  "media": {
+    "logos": [
+      {
+        "url": "https://customer-assets.emergentagent.com/job_3e8724c5-5ef3-4193-b146-20878ddec3cb/artifacts/jc0f5j3j_JMA%20shield%20final%20%281%29.png",
+        "description": "JMA shield logo. Use in the top navigation/header and on the main menu.",
+        "category": "logo"
+      }
+    ],
+    "characters": [
+      {
+        "url": "https://customer-assets.emergentagent.com/job_3e8724c5-5ef3-4193-b146-20878ddec3cb/artifacts/nmqiliyk_Scene%20-%20Charlie%20episode%202.020.png",
+        "description": "Charlie the Hipster Shark playing cello. Use as an animated mascot on the side of the game board or level selection. Floating via framer-motion.",
+        "category": "character"
+      },
+      {
+        "url": "https://customer-assets.emergentagent.com/job_3e8724c5-5ef3-4193-b146-20878ddec3cb/artifacts/8nls8f3y_Scene%20-%20Charlie%20episode%202.034.png",
+        "description": "Captain Catfish playing guitar. Use as an interactive character on the menu or end-of-game score screen.",
+        "category": "character"
+      }
+    ],
+    "backgrounds": [
+      {
+        "url": "https://images.unsplash.com/photo-1660772607230-00956052e5c4?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NjZ8MHwxfHNlYXJjaHwxfHxjb2xvcmZ1bCUyMGtpZHMlMjBnYW1lJTIwc3VuYnVyc3QlMjBiYWNrZ3JvdW5kJTIwdmVjdG9yfGVufDB8fHx8MTc3NjQ0Nzg4Mnww&ixlib=rb-4.1.0&q=85",
+        "description": "Rainbow / colorful vector backdrop. Fallback background. Prefer pure CSS radial-gradient sunbursts (`repeating-conic-gradient`) for sharper resolution.",
+        "category": "background"
+      }
+    ],
+    "instruments": [
+      {
+        "url": "https://images.unsplash.com/photo-1477921749929-1b7a5d38b68a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAxODF8MHwxfHNlYXJjaHwxfHxjb2xvcmZ1bCUyMGRlc2slMjBiZWxsfGVufDB8fHx8MTc3NjQ0Nzg4Mnww&ixlib=rb-4.1.0&q=85",
+        "description": "Fallback desk bell if needed, but STRONGLY prefer building CSS/SVG 'Jelly Bells'. Desk bells should be a colored round top (div) inside a bottom gray base (div) to easily map to the 8 bell_colors.",
+        "category": "instrument"
+      }
+    ]
+  },
+  "instructions_to_main_agent": [
+    "CRITICAL: Use Javascript (.js) only for all React components. Do NOT use Typescript (.tsx).",
+    "CRITICAL: The target audience is young children. Make all hitboxes huge and UI elements chunky (Neo-brutalist/Tactile blend). Use thick dark borders (4px-8px) for contrast.",
+    "Bells implementation: Build the 'Jelly Bells' using simple layered CSS/HTML (a colored semi-circle on a gray rectangular base) rather than loading external images. This allows easy hue-mapping (C to High C) and CSS scale animations on tap.",
+    "Use framer-motion heavily for bounce animations on buttons, characters floating, and score feedback.",
+    "Add `data-testid` attributes to all interactive elements, navigation links, game buttons, and bells (e.g., `data-testid='start-game-button'`, `data-testid='bell-C_Do'`).",
+    "Audio Implementation: Since specific audio URLs were not provided, build a small fallback Web Audio API synth (OscillatorNode with short decay) to play the C Major scale (C4 to C5), mapping each bell to its Do-Re-Mi note.",
+    "Game Modes to Build: 1. Rhythm Game (absolute positioned notes falling), 2. Simon Says (highlight bells in sequence, wait for user input), 3. Free Play (just tap bells).",
+    "Game Screens: Home Menu (mode selection), Level/Game Screen, Result/Score Screen.",
+    "Backgrounds: Build a 'sunburst pattern' dynamically via Tailwind arbitrary properties or custom CSS: `background: repeating-conic-gradient(from 0deg, #87CEEB 0deg 15deg, #E0F7FA 15deg 30deg);`"
+  ],
+  "accessibility_and_testing": {
+    "data_testids": "MANDATORY on all interactive elements. Follow kebab-case role-based naming.",
+    "contrast": "Ensure text inside buttons has at least 4.5:1 contrast ratio. Use the dark blue foreground color for text on bright buttons if white isn't visible."
+  }
+}

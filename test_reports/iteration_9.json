@@ -1,0 +1,32 @@
+{
+  "summary": "Verified NextMissionPanel on JMA homepage across all 6 scenarios from the review request. First-time user sees the correct Cadet starter mission (Detective Dr. Jellybone) and clicking the panel navigates to /detective. Mid-progress seeding (ear+rhythm cadet) correctly advances the engine to the next CADET_PREFERENCE slot ('keyboard') with the matching copy 'Tap all 8 bells in Jam Session' routing to /free-play. Full 18-achievement seed correctly swaps the panel for the complete-state ribbon. Visual styling, rank-badge text, and primary-card regression all pass.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "useNextMission.js fallback walk (lines 114-128) iterates ['cadet','pro','master'] and `continue`s on the target tier, but if targetTier is 'cadet' the walk only inspects 'pro' and 'master' — both require prereqs that the kid (with no Cadets) can't satisfy, so the function returns null. This is a theoretical edge case (the engine catches it earlier via the first-time-pick guard) but the fallback should walk DOWN, not iterate the same fixed order, to be truly robust.",
+    "NextMissionPanel.js wraps the whole banner in a <button> containing another visual button (the GO div). This is fine semantically (no nested button) but the GO area has data-testid 'next-mission-go' on a <div> — if testers click [data-testid=next-mission-go] expecting an independent click target they may be confused. The outer panel handles the click; the GO is decorative. Current behavior matches the spec; just worth a one-line comment in the component.",
+    "Playwright clicking the framer-motion <motion.button> sometimes does not fire React's onClick after page.click(force=True) — confirmed by previous iteration. dispatch_event('click') works. This is a test mechanics quirk, not an app bug, but worth flagging in code comments near the panel so future testers know."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only)", "frontend": "100% (6/6 scenarios verified)"},
+  "test_credentials": "none required",
+  "seed_data_creation": "Used localStorage seeding for mid-progress (ach_ear_cadet + ach_rhythm_cadet) and full 18-achievement state. Wiped between runs.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Primary card testids are home-card-play / home-card-learn / home-card-create (NOT primary-card-*). Sticker spotlight testid when empty is 'sticker-spotlight-empty'. Practice streak chip is hidden when count<2 (no element rendered). To navigate the NextMissionPanel via Playwright, use .dispatch_event('click') OR scroll_into_view_if_needed + click(force=True); plain click may miss due to framer-motion transforms.",
+  "test_flow_verified": {
+    "test1_first_time": "PASS — panel present, instruction 'Crack one case in Detective Dr. Jellybone', tier 'CADET', GO button text 'Solve a caseGO' (responsive), click navigated to /#/detective",
+    "test2_mid_progress": "PASS — after seeding ear+rhythm cadet, instruction 'Tap all 8 bells in Jam Session', tier 'CADET', click navigated to /#/free-play (used dispatch_event)",
+    "test3_all_complete": "PASS — next-mission-complete testid present, next-mission-panel absent, text contains 'All Missions Complete' and 'You're a true Maestro! Keep jamming.'",
+    "test4_styling": "PASS — bg gradient uses rgba(155,109,224,...) (Note Detective purple #9B6DE0), GO bg = rgb(155,109,224), avatar src = assets/characters/dr-jellybone.png, inline boxShadow '0 6px 0 0 var(--jma-dark)' (computed rgb(10,37,64) 0px 6px 0px 0px)",
+    "test5_rank_badge": "PASS — rank-badge present with text 'Academy Rank Polliwog Next: Earn 1 Cadet badge'",
+    "test6_regression": "PASS — home-card-play/learn/create all present and navigate to /#/play, /#/learn, /#/create respectively; sticker-spotlight-empty rendered; practice-streak-chip correctly hidden for new user; rank-badge intact"
+  },
+  "rca_of_the_issue": "No bugs. Implementation matches spec exactly. The only friction was a Playwright-only quirk: framer-motion's motion.button can swallow page.click(force=True). Switching to locator.dispatch_event('click') reliably triggers navigation. This is the same quirk noted in iteration_8."
+}

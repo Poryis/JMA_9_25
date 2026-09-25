@@ -1,0 +1,43 @@
+{
+  "summary": "Verified the Robot Boogie head-clipping bug fix. All 8 characters render with FULL heads visible in the active band (measured img.top == btn.top for every dancer sprite). The old transform:scale(1.4) + overflow:hidden crop is gone. Compact lineup order/8 tiles verified. Jazzy's new sprite (jazzy-playing.png, 1920x1080) loads and displays correctly. However, a SEPARATE layout issue was found: the Time Machine drops below the 1280x800 viewport at dancer counts 4 and 6.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "RobotBoogiePage active-band layout (n=4)",
+        "issue": "With 4 dancers active (2x2 grid using 4:3 slot aspect), the active-band grows so tall that the Time Machine sits at y=729..957 on a 1280x800 viewport — its bottom edge (~957px) is 157px BELOW the fold, and it overlaps/goes past the compact lineup at y=950. Requirement: TM fully visible for all counts 1..6.",
+        "selector": "[data-testid=\"robot-boogie-time-machine\"]",
+        "priority": "MEDIUM"
+      },
+      {
+        "component": "RobotBoogiePage active-band layout (n=6)",
+        "issue": "With 6 dancers active, active-band spans y=96..784 (688px tall) → TM pushed to y=784..1000, again below the 800px fold; compact lineup at y=1000..1136 also below fold. Page becomes scrollable (docH=1145). At n=1,2,3,5 the TM is comfortably visible.",
+        "selector": "[data-testid=\"robot-boogie-time-machine\"]",
+        "priority": "MEDIUM"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/rb_4dancers.png",
+    "/app/test_reports/rb_6_fresh.png",
+    "/app/test_reports/rb_jazzy.png"
+  ],
+  "action_items": [
+    "Reduce active-band max height (or slot inner scale) at n=4 and n=6 so Time Machine bottom stays above viewport bottom (800px) on 1280x800. Current n=4 uses innerScale=0.85 which is not enough; n=6 has no shrink. Consider shrinking n=6 innerScale to ~0.75 or capping active-band to ~55vh."
+  ],
+  "critical_code_review_comments": [
+    "CharacterSlot fix (RobotBoogiePage.js lines 386,403,420) correctly uses 'w-full h-full object-cover object-bottom' — since source sprites are 16:9 (512x288 or 1920x1080) fit into 1:1 or 4:3 slots, height fits exactly and horizontal transparent padding gets cropped. This is the correct approach.",
+    "The outer motion.button keeps 'overflow-hidden' as safety (line 362) — good.",
+    "The playingSingle image (Jazzy) is animated with a CSS transform wobble (line 406). Its getBoundingClientRect can momentarily report ~8px above the button box due to the transform, but the button's overflow-hidden clips it. Visually confirmed fine in screenshot.",
+    "LightningBolt zap overlay (lines 430-441) can extend above the slot during ~360ms zap animation — this is intentional decorative overflow and not a head-clip regression."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (frontend-only)", "frontend": "80% (head-clip fix verified; TM visibility regression at n=4/n=6)"},
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Head-clipping bug is DEFINITIVELY fixed across all 8 characters at all counts. New follow-up: Time Machine visibility at n=4 and n=6 on 1280x800. Test flow: setItem('jma_player_name_skipped_v1','1') → reload → click(200,700) to dismiss audio unlock → tap lineup tiles by data-testid=robot-boogie-char-<id>. Measurement snippet: compute bandRect vs tmRect vs viewport.innerHeight.",
+  "rca of the issue": "Original bug: transform:scale(1.4) with overflow:hidden scaled sprite uniformly, pushing heads above slot's visible box. Fix: replaced with object-cover object-bottom on w-full h-full images — height fits exactly, horizontal transparent padding cropped. Verified via getBoundingClientRect: img.top matches btn.top for all sprites (main character frames). Visual screenshots at n=6 show all 6 heads fully rendered."
+}

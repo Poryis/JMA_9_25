@@ -1,0 +1,48 @@
+{
+  "summary": "Frontend-only test of RobotBoogiePage head-clipping fix (iteration 16). Empirically measured every visible sprite <img> against its parent motion.button at n=1,3,4,5,6,8. HEAD CLIPPING IS FIXED at every count (clip_events=[] everywhere — no img.top is above btn.top). HOWEVER a new critical regression was introduced: the 3:4 aspect-ratio slots at widthPct 52% (n=4) and 55% (n=1) make the active-band balloon vertically, pushing the Time Machine and/or lineup OFF the 800px viewport, and pushing the top row of dancers ABOVE the viewport at n=5/6/8.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "RobotBoogiePage active-band", "issue": "Band height explodes because each slot uses aspectRatio 3/4 with widthPct up to 55%. Measured band heights: n=1=594px, n=3=514px, n=4=1288px, n=5=1074px, n=6=1074px, n=8=808px on a 800px viewport. Content larger than viewport pushes siblings off-screen.", "selector": "[data-testid=robot-boogie-active-band]", "priority": "CRITICAL"},
+      {"component": "Time Machine", "issue": "At n=4 TM getBoundingClientRect().top=1213 (viewport is 800) — TM is entirely BELOW the viewport, invisible to user.", "selector": "[data-testid=robot-boogie-time-machine]", "priority": "CRITICAL"},
+      {"component": "Compact lineup", "issue": "At n=1 lineup top=907 (below 800). At n=4 lineup top=1429 (far below). At n=1 lineup is off-screen; at n=4 completely off-screen.", "selector": "[data-testid=robot-boogie-lineup]", "priority": "CRITICAL"},
+      {"component": "Active dancers row 1", "issue": "At n=5,6,8 the entire TOP row of dancers sits above the viewport. Row1 tops: n=5=-627, n=6=-627, n=8=-361 (slot heights ~560/400px so bottoms are still above 0 or barely peek in). Only the bottom row is visible to the user.", "selector": "[data-testid^=robot-boogie-char-]", "priority": "CRITICAL"},
+      {"component": "Active count label", "issue": "countText shows 'N / 6 playing' — even after clicking all 8 characters the label reads '6 / 6 playing'. Test still measured 8 char buttons in band, so activation is capped or two characters are aliased. Not part of this iteration's ask but worth flagging.", "selector": "[data-testid=robot-boogie-active-count]", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "empirical_measurements": {
+    "viewport": "1280x800",
+    "per_count": {
+      "1": {"head_clipped": false, "rows": "1 (n=1)", "band_h": 594.66, "band_top": 96, "band_bottom": 690.66, "tm": "690.66..907.22 (bottom off-screen)", "lineup": "907.22..1043.22 (OFF-SCREEN)", "verdict": "head OK; lineup below viewport"},
+      "3": {"head_clipped": false, "rows": "3 in 1 row", "band_h": 514.66, "band_top": -75, "band_bottom": 439.66, "tm": "439.66..656.22 (visible)", "lineup": "656.22..792.22 (visible)", "verdict": "head OK; band top slightly above viewport but content still visible; TM + lineup visible"},
+      "4": {"head_clipped": false, "rows": "2 + 2 (correct wrap math)", "row0_horizontal_gap_px": -60, "band_h": 1288, "band_top": -75, "band_bottom": 1213, "tm": "1213..1429.56 (OFF-SCREEN)", "lineup": "1429.56..1565.56 (OFF-SCREEN)", "verdict": "HEAD OK but layout catastrophically broken — TM & lineup below viewport"},
+      "5": {"head_clipped": false, "rows": "3 + 2", "band_h": 1074.66, "band_top": -635, "band_bottom": 439.66, "row1_top": -627, "row2_top": -93.7, "tm": "439.66..656.22 (visible)", "lineup": "656.22..792.22 (visible)", "verdict": "head OK; but top row of dancers entirely above viewport (invisible)"},
+      "6": {"head_clipped": false, "rows": "3 + 3", "band_h": 1074.66, "band_top": -635, "band_bottom": 439.66, "row1_top": -627, "row2_top": -93.7, "tm": "visible", "lineup": "visible", "verdict": "head OK; top row of dancers entirely above viewport"},
+      "8": {"head_clipped": false, "rows": "4 + 4", "band_h": 808, "band_top": -369, "band_bottom": 439, "row1_top": -361, "row2_top": 39, "tm": "visible", "lineup": "visible", "verdict": "head OK; top row mostly above viewport; only 6/6 activate (see label bug)"}
+    }
+  },
+  "head_visibility_table": "n=1 PASS | n=3 PASS | n=4 PASS | n=5 PASS | n=6 PASS | n=8 PASS  (no character's <img> top is above its parent motion.button top — clip_events=[] at every count)",
+  "action_items": [
+    "The head-clipping fix works and should stay. Do NOT revert the object-contain + 3:4 aspect + negative-margin approach on the horizontal axis.",
+    "URGENT: Constrain the active-band's vertical size so it never pushes TM/lineup off-screen. Options: (a) cap band max-height (e.g. calc(100vh - 320px)) so aspect-ratio slots shrink to fit, (b) drop the fixed 3:4 aspect on the slot and use a max-height on the img instead, (c) reduce widthPct/maxW aggressively at multi-row counts so slot height <= (available band height / rows). Current values (52%/480 at n=4, 36%/400 at n=5-6) produce 640/533/400px-tall slots — too tall for 800px viewport once you subtract header/TM/lineup.",
+    "Verify at 1280x800: viewport-available band height ≈ 800 - (header ~60 + count-chip ~40 + TM ~220 + lineup ~140 + padding) ≈ 340px. Slot height must be <= 340 for single row, <= 170 for two rows. Currently far exceeded.",
+    "Fix the '/ 6 playing' cap: with 8 characters in the lineup users can only activate 6. Either lift the cap to 8 or hide the 7th/8th from lineup.",
+    "Retest at n=4 in particular — that's the count where the regression is most catastrophic (TM at y=1213 on an 800px viewport)."
+  ],
+  "critical_code_review_comments": [
+    "RobotBoogiePage.js line ~693: active-band uses `flex-1 ... overflow-hidden` with a hard `minHeight: 180px` but no `maxHeight`. Combined with children that carry `aspectRatio: 3/4` and up to 55% width, the flex-1 rule does NOT prevent overflow — children dictate min size, forcing the band taller than the viewport at n>=4.",
+    "RobotBoogiePage.js line ~369: `aspectRatio: '3 / 4'` on CharacterSlot is head-safe but is the direct cause of the vertical overflow. Consider tying slot height to available band height (via a resize observer or CSS clamp on maxHeight) rather than pure aspect-ratio.",
+    "The negative-margin trick works for horizontal closeness at n=4 (measured overlap -60px, matches spec) but doesn't address the taller-slot problem the wider widthPct introduces."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "50% (head-clip fixed; TM/lineup/top-row visibility broken)"},
+  "test_credentials": "none (used localStorage jma_player_name_skipped_v1='1' + click 'TAP ANYWHERE' to unlock audio)",
+  "seed_data_creation": "none",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "main_agent_can_self_test": false,
+  "context_for_next_testing_agent": "To reach the game: page.goto('.../#/robot-boogie'); wait; page.evaluate(\"localStorage.setItem('jma_player_name_skipped_v1','1')\"); page.reload(); wait; click 'add my name later' if present; then click 'TAP ANYWHERE' to dismiss audio unlock. Characters are activated by clicking [data-testid=\"robot-boogie-lineup\"] [data-testid=\"robot-boogie-char-<id>\"] where id in {robot1,chunk,jellybone,finn,charlie,lou,jazzy,robot2}. Active count is capped at 6 currently. To measure head clip: for each button in [data-testid=robot-boogie-active-band], compare each visible <img>'s getBoundingClientRect().top to the button's top — img.top must be >= btn.top. To assess TM/lineup visibility, compare their bounding rects to viewport (vh=800).",
+  "rca_of_the_issue": "The vertical regression is caused by CharacterSlot's fixed `aspectRatio: 3/4` combined with the newly widened widthPct values (55% at n=1, 52% at n=4). Slot height = min(widthPct*bandW, maxW) * 4/3. At 1280x800 → n=4 slot=480x640, two rows=1280px band. The band is `flex-1 flex-wrap` with no max-height, so it grows to fit its children and pushes TM + lineup below the viewport. Head-clipping is fixed because each sprite uses `object-contain object-bottom` inside a slot that no longer clips, but the fix trades a pixel-level clip for a viewport-level overflow. Mitigation: cap slot height (or the band's max-height) so slots shrink when there isn't room. E.g. add `maxHeight: calc((100vh - 400px) / rowsForCount)` or use `maxHeight` on the img while relaxing the slot's fixed aspect ratio."
+}

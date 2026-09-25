@@ -1,0 +1,27 @@
+{
+  "summary": "Verified P0 Beat Lab crop fix and full regression across PLAY/LEARN/CREATE sub-menu pages at desktop (1920x1080), iPhone (390x844), iPad portrait (768x1024) and iPad landscape (1024x768). All 14 hero characters render bottom-centered inside their cards with 0px offset from card center — the framer-motion transform-clobber bug is fixed. All titles render single-line top-center via AutoFitTitle (font sizes shrink from 44px down to 27–41px on long titles like DETECTIVE DR. JELLYBONE / WHO'S GOT THE RHYTHM / CHARLIE'S SONG STUDIO to fit one line). song-studio correctly has no character (background + title only). Header Finn+Shield+Charlie hero row visible on all pages. No 'ResizeObserver loop' runtime overlay observed after load or resize.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Bug fix in /app/frontend/src/components/SubMenuPage.js (Tile hero wrapper) is correct: non-motion div owns transform: translateX(-50%), motion.img handles y/rotate only. Clean separation prevents future recurrence.",
+    "AutoFitTitle uses rAF-scheduled ResizeObserver — good pattern to silence the benign 'ResizeObserver loop' warning in CRA dev overlay.",
+    "Minor: HERO_SCALE cap of 78% works well; jelly-rap-trio (52 * 1.45 = 75.4%) fits with ~48px breathing room on mobile — no risk of edge clipping."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "100%"},
+  "measurements": {
+    "beat-lab_hero_offsetFromCenter_px": {"desktop_1920": 0, "iphone_390": 0, "ipad_portrait_768": 0},
+    "beat-lab_hero_side_margins_px": {"desktop": 64.8, "iphone": 48.0, "ipad_portrait": 46.1},
+    "long_title_autofit_font_sizes_px": {"DETECTIVE DR. JELLYBONE": 36, "WHO'S GOT THE RHYTHM": 39, "CHARLIE'S SONG STUDIO_desktop": 36, "CHARLIE'S SONG STUDIO_iphone": 28, "CHARLIE'S SONG STUDIO_ipad_portrait": 27}
+  },
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "SubMenuPage Tile hero wrapper bug is fixed. Bypass onboarding for automation via localStorage.jma_player_name + jma_onboarded, and sessionStorage.jma_audio_unlocked_v1 via add_init_script before goto."
+}

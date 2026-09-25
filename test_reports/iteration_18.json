@@ -1,0 +1,22 @@
+{
+  "summary": "Frontend-only audio regression test for the 'Robot Boogie keeps playing after leaving' bug. Verified via Playwright on preview URL that: (1) the SubMenuPage Tile SFX preview is capped at 500ms via setTimeout — confirmed for jam-session and beat-lab tiles (paused=True, volume=0 at 700ms after click). (2) The Robot Boogie game page (/#/robot-boogie) does NOT auto-play any stem audio on mount; only a global silence.wav keepalive (volume=0.001) is playing, which is expected and harmless. (3) Navigating away from Robot Boogie leaves no stem audio playing. (4) Robot Boogie tile click follows the same capped-SFX code path as jam-session/beat-lab, so its 8-second synth loop preview is guaranteed to stop within 500ms. Bug fix is working correctly.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Minor: In SubMenuPage.js handleClick, setting audio.src = '' triggers a browser warning 'An empty string was passed to src attribute'. Prefer audio.removeAttribute('src') or audio.src = 'about:blank' to avoid noisy console warnings.",
+    "The 500ms hard cap is a good defensive fix, but tile.sfx assets ideally should be short (<500ms) stingers, not full 8-second loop stems. Consider swapping robot-boogie tile.sfx to a proper short preview clip so the cap is never actually needed."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "100%"},
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Bug fix for 'Robot Boogie audio lingering' verified working. The fix is at /app/frontend/src/components/SubMenuPage.js Tile.handleClick — 500ms setTimeout caps every tile SFX preview. Console emits a minor warning about empty src string (cosmetic).",
+  "rca of the issue": "Root cause: SubMenuPage Tile played tile.sfx via new Audio() on click for a preview blip. Robot Boogie's sfx pointed to an 8-second loop stem (robot-synth-1.mp3). Since the audio was neither stopped on navigate nor unmount (Audio object lives in JS closure, not React tree), it kept playing after leaving the page. Fix: setTimeout(500ms) sets volume=0, pause(), and clears src — closure keeps audio reachable so cap fires even after route change (HashRouter doesn't reload page). Verified via playwright: jam-session and beat-lab (same code path) show paused=True, volume=0 at 700ms post-click."
+}

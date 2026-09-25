@@ -1,0 +1,30 @@
+{
+  "summary": "Frontend-only visual-correctness regression for the two Phase-3 bug fixes (SolfegeStaff rebuild + DetectivePage Rest Quiz rest-dot cleanup) plus Phase 3 regression checks. All three scenarios verified on live preview (1280x900).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "SolfegeStaff", "issues": ["Middle C (C/Do) is placed at y=99% which puts the note head right against the bottom border of the staff container. The ledger line and label render but the head is partially clipped against the rounded border. Cosmetic — suggest y ~95% so the head + ledger sit clearly below the bottom staff line without touching the frame."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "(Optional/cosmetic) Move Middle C from y=99% to ~94-95% in SolfegeStaff.NOTE_Y so the note head and ledger line don't kiss the bottom border of the staff frame."
+  ],
+  "critical_code_review_comments": [
+    "SolfegeStaff.js is clean, well-commented, and renders a real 5-line treble staff with TrebleClef SVG, NOTE_Y map, ledger line for Middle C, and tilted oval note heads. staff-note-{i} testids present and unique.",
+    "DetectivePage.js correctly gates the rest-dot placeholder behind `round.mode === 'extra'` (returns null) so Rest Quiz chip row is clean. Wrong-note modes (easy/medium/hard) still render the '•' rest dots between chip groups — confirmed in easy run (14 chips + 1 rest dot for Twinkle Twinkle).",
+    "Minor: `ear-tempo-quiz-btn` lives on route `/#/ear-trainer`, not `/#/ear-training`. Review request referred to it incorrectly; code/test ids are correct."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "100%"},
+  "seed_data_creation": "Seeded localStorage `jma_practice_streak_v1` = {count:3, lastDate: <yesterday ISO>} to verify practice-streak-chip rendering (shown as '4-day streak · Practice Buddy!' after the same-day visit increments it to 4).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "SR Sprint flow: tap [data-testid=sight-reading-difficulty-master] → wait ~4.5s for demo → read solfege labels from staff-note-0..4 spans (label is 'Do'+chevron-svg for High C) and click matching [data-testid=bell-{NOTE}] (note that High C bell testid is 'bell-High-C', hyphenated — NOT 'bell-High C'). Completing all 5 shows sight-reading-win modal. Rest Quiz: tap detective-difficulty-restquiz, wait ~12s for original+suspect playback to reach 'guess' phase, then check detective-playing has detective-slot-N chips with NO rest-dot divs. Tempo Quiz menu lives at /#/ear-trainer (not /#/ear-training).",
+  "rca of the issue": {
+    "bug_a_sight_reading_staff": "Previously the staff had only 3 lines and notes weren't pitch-positioned. Fix in /app/frontend/src/components/SolfegeStaff.js draws 5 horizontal lines at y=29/43/57/71/85% and maps each bell note to a pitch-correct y% (C=99, B=57, High C=50, etc.). Verified visually: Ti sits on middle line, High C sits in 3rd space, Middle C below staff on ledger.",
+    "bug_b_rest_quiz_dots": "Rest dot placeholders rendered as gray '•' divs were leaking into the Rest Quiz chip row, mis-aligning the chip line. Fix in /app/frontend/src/pages/DetectivePage.js short-circuits the rest-dot render path when round.mode === 'extra' (returns null). Verified: Rest Quiz showed 14 chips and 0 rest-dot divs while wrong-note Easy run still shows 1 rest dot for Twinkle Twinkle's rest."
+  }
+}

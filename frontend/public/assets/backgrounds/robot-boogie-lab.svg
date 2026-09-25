@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  robot-boogie-lab.svg — static Lab background used as the Robot
+  Boogie card artwork on the Create menu. Derived from the animated
+  BgLab component in RobotBoogieBackgrounds.js; animations stripped so
+  it works as a background-image URL (SVG SMIL and CSS animations
+  don't run when the SVG is used as a background-image).
+
+  Style rules match the JMA aesthetic: flat fills, thick black stroke,
+  zero shading / bevel.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <!-- Wall -->
+  <rect x="0" y="0" width="1600" height="900" fill="#1e2338"/>
+  <!-- Floor slab -->
+  <rect x="0" y="620" width="1600" height="280" fill="#3a3350" stroke="#000" stroke-width="6"/>
+  <line x1="0" y1="620" x2="1600" y2="620" stroke="#000" stroke-width="6"/>
+  <!-- Wall panels -->
+  <g>
+    <rect x="80" y="140" width="80" height="340" fill="#0a1420" stroke="#000" stroke-width="6"/>
+    <rect x="94" y="160" width="52" height="300" fill="#3ec8ff"/>
+    <rect x="94" y="160" width="52" height="300" fill="none" stroke="#7feaff" stroke-width="3"/>
+    <rect x="320" y="140" width="80" height="340" fill="#0a1420" stroke="#000" stroke-width="6"/>
+    <rect x="334" y="160" width="52" height="300" fill="#3ec8ff"/>
+    <rect x="334" y="160" width="52" height="300" fill="none" stroke="#7feaff" stroke-width="3"/>
+    <rect x="1280" y="140" width="80" height="340" fill="#0a1420" stroke="#000" stroke-width="6"/>
+    <rect x="1294" y="160" width="52" height="300" fill="#3ec8ff"/>
+    <rect x="1294" y="160" width="52" height="300" fill="none" stroke="#7feaff" stroke-width="3"/>
+    <rect x="1440" y="140" width="80" height="340" fill="#0a1420" stroke="#000" stroke-width="6"/>
+    <rect x="1454" y="160" width="52" height="300" fill="#3ec8ff"/>
+    <rect x="1454" y="160" width="52" height="300" fill="none" stroke="#7feaff" stroke-width="3"/>
+  </g>
+  <!-- Vents -->
+  <g>
+    <rect x="560" y="80" width="140" height="40" fill="#2a2a3e" stroke="#000" stroke-width="6"/>
+    <line x1="580" y1="100" x2="680" y2="100" stroke="#000" stroke-width="3"/>
+    <line x1="580" y1="110" x2="680" y2="110" stroke="#000" stroke-width="3"/>
+    <rect x="900" y="80" width="140" height="40" fill="#2a2a3e" stroke="#000" stroke-width="6"/>
+    <line x1="920" y1="100" x2="1020" y2="100" stroke="#000" stroke-width="3"/>
+    <line x1="920" y1="110" x2="1020" y2="110" stroke="#000" stroke-width="3"/>
+  </g>
+  <!-- Cables snaking toward center from the floor -->
+  <path d="M0 780 C 300 780 500 720 800 720 C 1100 720 1300 780 1600 780" stroke="#000" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <path d="M0 780 C 300 780 500 720 800 720 C 1100 720 1300 780 1600 780" stroke="#ff5b5b" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M0 830 C 400 830 600 800 800 800 C 1000 800 1200 830 1600 830" stroke="#000" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <path d="M0 830 C 400 830 600 800 800 800 C 1000 800 1200 830 1600 830" stroke="#3ec8ff" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <!-- Floor tile perspective lines -->
+  <line x1="0"    y1="620" x2="-100" y2="900" stroke="#000" stroke-width="3" opacity="0.55"/>
+  <line x1="200"  y1="620" x2="100"  y2="900" stroke="#000" stroke-width="3" opacity="0.55"/>
+  <line x1="400"  y1="620" x2="300"  y2="900" stroke="#000" stroke-width="3" opacity="0.55"/>
+  <line x1="600"  y1="620" x2="500"  y2="900" stroke="#000" stroke-width="3" opacity="0.55"/>
+  <line x1="800"  y1="620" x2="700"  y2="900" stroke="#000" stroke-width="3" opacity="0.55"/>
+  <line x1="1000" y1="620" x2="900"  y2="900" stroke="#000" stroke-width="3" opacity="0.55"/>
+  <line x1="1200" y1="620" x2="1100" y2="900" stroke="#000" stroke-width="3" opacity="0.55"/>
+  <line x1="1400" y1="620" x2="1300" y2="900" stroke="#000" stroke-width="3" opacity="0.55"/>
+</svg>

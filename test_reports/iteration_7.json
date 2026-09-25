@@ -1,0 +1,77 @@
+{
+  "summary": "Verified JMA polish round per direct user feedback (3 bugs): (a) Middle C now sits on its own ledger line BELOW the staff at y=77%, ledger line visible at 75.78% with zIndex:4 above note head; (b) handleBellTap fires playBellNote(note) on every tap before the gameState gate — no console errors during taps; (c) 'Rest Quiz' renamed to 'Sneaky Note' and 'Tempo Quiz' renamed to 'Snail or Cheetah?'; Sneaky Note mode plays a corrupted tune that fills a real rest, phase label reads 'Which note covered up the silence?' and reveal text uses the new SILENCE/REST copy. All 5 requested checks pass. Regression: Sticker Book and Detective Rookie (wrong-note mode) still work.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "verification_details": {
+    "1_staff_positioning": {
+      "staff_height_px": 300,
+      "staff_lines_pct_measured": [22.74, 33.45, 44.16, 54.86, 65.57],
+      "staff_lines_pct_expected": [22, 33, 44, 55, 66],
+      "max_line_drift_pct": 0.74,
+      "note_head_positions": [
+        {"note": "Mi (E)", "src": "mi.png", "head_y_pct": 65.56, "expected": 66, "diff": 0.44, "on_bottom_line": true},
+        {"note": "Do (C)", "src": "do.png", "head_y_pct": 76.28, "expected": 77, "diff": 0.72, "below_5th_line": true, "ledger_present": true, "ledger_y_pct": 75.78, "ledger_above_or_at_head": true},
+        {"note": "Ti (B)", "src": "ti.png", "head_y_pct": 44.16, "expected": 44, "diff": 0.16, "on_middle_line": true},
+        {"note": "Fa (F)", "src": "fa.png", "head_y_pct": 60.22, "expected": 60.5, "diff": 0.28}
+      ],
+      "result": "PASS — Every head within ~1% (~3px on 300px staff) of spec. Middle C sits below the 5th line with a visible ledger line drawn at zIndex:4 (above the note head image)."
+    },
+    "2_bell_audio": {
+      "bell_C_present": true,
+      "console_errors_during_tap": "none",
+      "code_path_verified": "SightReadingPage.js line 132-135: try { playBellNote(note); } catch {} runs BEFORE the gameState !== 'playing' early return.",
+      "pressed_image_display": "inherit (class-controlled by .instrument-frame-pressed in CSS, briefly toggled via .style.display='block' on pointerdown — too fast to capture between Playwright down+up).",
+      "result": "PASS — Audio path executes without errors on every tap regardless of game state."
+    },
+    "3_sneaky_note": {
+      "tile_text": "Sneaky Note\\n\\nThe suspect filled a SILENCE with a note!",
+      "testid_retained": "detective-difficulty-restquiz",
+      "timer_text": "⏱ 30s",
+      "rest_dot_count_in_chip_row": 0,
+      "phase_label": "Which note covered up the silence",
+      "wrong_tap_reveal_text": "Slot 4 (Re) was hiding a silence. The song has a rest there!",
+      "format_matches_spec": true,
+      "round_continues": true,
+      "result": "PASS"
+    },
+    "4_snail_or_cheetah": {
+      "tile_text": "Snail or Cheetah?\\n\\n🐆 vs 🐌 — 10 rounds of pace-spotting",
+      "testid_retained": "ear-tempo-quiz-btn",
+      "menu_heading": "Snail or Cheetah?",
+      "page_header": "Snail or Cheetah?",
+      "choice_buttons": ["CHEETAH", "SNAIL"],
+      "tempo_quiz_menu_testid_present": true,
+      "tempo_quiz_start_works": true,
+      "result": "PASS"
+    },
+    "5_regression": {
+      "sticker_book_page_loads": true,
+      "detective_easy_loads": true,
+      "detective_easy_header": "Tap the wrong note the moment you hear it!",
+      "detective_easy_mode_preserved": "wrong (rest-dot dividers visible between chips in playback)",
+      "result": "PASS"
+    }
+  },
+  "test_report_links": [
+    "/app/test_reports/staff_positions.png",
+    "/app/test_reports/detective_sneaky.png",
+    "/app/test_reports/tempo_play.png",
+    "/app/test_reports/detective_easy.png"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "DetectivePage.js is now 923 lines (was 882). Strong candidate to split LEVELS/buildRound/playback effects into separate modules — exceeds the 700-line guideline.",
+    "SolfegeStaff.js retains the dead constant NOTE_IMG_HEIGHT_PCT at line 91 (flagged in iter 6, still present) — minor cleanup.",
+    "JellyBells pressed-image relies on CSS class + inline style toggling; consider an explicit data-state='pressed' attribute so automated tests can deterministically observe bell-press state without timing."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "n/a (frontend only)", "frontend": "100%" },
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Pixel-level staff positioning verified via getBoundingClientRect + headPct math (Do at 76.28% vs expected 77, ledger at 75.78%, all heads <1% drift). Sneaky Note mode confirmed end-to-end: tile copy, phase label, wrong-tap reveal text 'Slot N (Solfege) was hiding a silence. The song has a rest there!' — matches spec. Snail or Cheetah confirmed CHEETAH/SNAIL button copy. Bell audio path runs cleanly on every tap. Sticker Book + Detective Rookie regression intact."
+}

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  robot-boogie-card.svg — card artwork for the Robot Boogie tile on
+  the Create menu. Not the in-game Lab (too busy) — a simple
+  spotlight-on-stage backdrop that lets the hero character sprite
+  (Robot 1) be the star. Flat art style, thick black strokes.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="rb-card-spot" cx="50%" cy="42%" r="65%">
+      <stop offset="0%"  stop-color="#7B4FCC"/>
+      <stop offset="55%" stop-color="#3B1F5C"/>
+      <stop offset="100%" stop-color="#1A0B2E"/>
+    </radialGradient>
+    <linearGradient id="rb-card-floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#2A1550"/>
+      <stop offset="100%" stop-color="#0E0625"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Room -->
+  <rect x="0" y="0" width="800" height="800" fill="url(#rb-card-spot)"/>
+
+  <!-- Simple disco floor at the bottom third with big flat colored tiles -->
+  <rect x="0" y="560" width="800" height="240" fill="url(#rb-card-floor)" stroke="#000" stroke-width="6"/>
+  <line x1="0" y1="560" x2="800" y2="560" stroke="#000" stroke-width="6"/>
+  <!-- 4 vanishing lines for perspective -->
+  <line x1="-100" y1="800" x2="400" y2="560" stroke="#000" stroke-width="4" opacity="0.55"/>
+  <line x1="200"  y1="800" x2="400" y2="560" stroke="#000" stroke-width="4" opacity="0.55"/>
+  <line x1="600"  y1="800" x2="400" y2="560" stroke="#000" stroke-width="4" opacity="0.55"/>
+  <line x1="900"  y1="800" x2="400" y2="560" stroke="#000" stroke-width="4" opacity="0.55"/>
+  <!-- Colored tile row hint -->
+  <rect x="80"  y="640" width="140" height="60" fill="#FF3AA8" stroke="#000" stroke-width="4"/>
+  <rect x="240" y="640" width="140" height="60" fill="#FFE066" stroke="#000" stroke-width="4"/>
+  <rect x="420" y="640" width="140" height="60" fill="#4AC6FF" stroke="#000" stroke-width="4"/>
+  <rect x="580" y="640" width="140" height="60" fill="#4CD964" stroke="#000" stroke-width="4"/>
+
+  <!-- Spotlight cone from top -->
+  <path d="M 400 -20 L 240 560 L 560 560 Z" fill="#FFE066" opacity="0.28"/>
+  <path d="M 400 -20 L 300 560 L 500 560 Z" fill="#FFF6C8" opacity="0.35"/>
+</svg>

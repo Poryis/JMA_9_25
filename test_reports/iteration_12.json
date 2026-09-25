@@ -1,0 +1,56 @@
+{
+  "summary": "Frontend-only regression sweep of the batch overhaul (name swap Jelly Jukebox / Who's Got the Rhythm, ALL-CAPS NES-style submenu tiles, Lou blimp on Play/Learn/Create, Lessons cascade layout with real names, JMAtv 4-channel expansion + STREAMING NOW rename, JMAtv 'channel' scrub, back-button rules). Tested via Playwright against public REACT_APP_BACKEND_URL. All routes rendered without console errors and no page errors were captured. Two real bugs found — see below.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "pages/BoomGardenPage.js",
+        "issue": "Mode label rename NOT applied. Line 47 still reads `label: 'Echo Stew'`. On /boom-garden the third-from-left card renders 'ECHO STEW' (see screenshot) instead of 'PARROT PERCUSSION'. Consequently the in-game GameHeader reads 'Who's Got the Rhythm · Echo Stew' instead of the expected 'Who's Got the Rhythm · Parrot Percussion'. Tagline 'Stew plays. You play it back.' also not visible. Note: the data-testid is still `boom-mode-copy` so nav wiring is fine — only the display label needs updating.",
+        "selector": "[data-testid=\"boom-mode-copy\"]",
+        "priority": "HIGH"
+      },
+      {
+        "component": "pages/JMAtvChannelPage.js",
+        "issue": "The word 'channel' still appears in visible copy on the VARIETY SHOW empty state. Line 167 empty-state body reads: 'Fresh episodes are on the way. Check the other channels in the meantime.' — this violates the 'no word channel anywhere in JMAtv copy' rule for /jmatv/variety-show. Suggested rewrite: 'Fresh episodes are on the way. Check out the other shows in the meantime.'",
+        "selector": "[data-testid=\"jmatv-channel-empty\"]",
+        "priority": "MEDIUM"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "verified_passing": [
+    "/ Home: play/learn/create cards + retro-tv testids present; RetroTV shows 'STREAMING NOW'; no 'Now on JMAtv'; TV inner text = 'STREAMING NOW' only (no bottom-strip JMAtv label); back-button hidden on home.",
+    "/play: all 5 tiles present (JELLY JUKEBOX, STEW KAZOO SAYS, NOTE MATCH, DETECTIVE DR. JELLYBONE, SIGHT-READING SPRINT). No 'Catch the falling notes!' tagline. No 'Find the pairs!' bubble. Blimp img loaded. testids play-menu-page + submenu-tile-jelly-jukebox present.",
+    "/learn: FUN FACTS CLUBHOUSE, WHO'S GOT THE RHYTHM, EAR QUEST, LESSONS all render. 'Stew's Rhythm Academy' string is gone. Blimp visible. submenu-tile-boom-garden testid preserved.",
+    "/create: JAM SESSION, BEAT LAB, CHARLIE'S SONG STUDIO render. Blimp visible.",
+    "/rhythm-game: rhythm-game-menu testid present, screenshot confirms 'JELLY JUKEBOX' title with rainbow glow on dark purple/violet radial-gradient bg, subtitle pill 'Boogie edition' present. (innerText comparison for 'Jelly Jukebox' returned False because CSS text-transform capitalizes the title — the underlying source text is 'Jelly Jukebox' as required; only the rendered form is uppercase.)",
+    "/boom-garden: page title 'Who's Got the Rhythm' rendered; 'Pick your jam.' subtitle present; 'Three rhythm games' copy removed; background is football-field.png; BEAT FINDER + RHYTHM RUN labels correct.",
+    "/lessons: cascade layout renders with all 7 lesson testids and correct ALL-CAPS names (TALKIN' BOUT TEMPO, NOTES MCGOTES, SEAHORSE SIESTA, WHO'S GOT THE RHYTHM, HIGH N LOW, DOUGH IS IN PIZZA, JELLY JAMBOREE).",
+    "/jmatv: 4 tiles render (FUN FACTS, PUNS WITH FINN DANGER, JMA MUSIC VIDEOS, VARIETY SHOW). Word 'channel' absent from home.",
+    "/jmatv/variety-show: renders jmatv-channel-empty testid with 'Coming soon!' state (but see bug above re 'channels' wording).",
+    "/jmatv/jma-music-videos: episode 'Dough is in Pizza' present, old 'Do is in Pizza' typo not found.",
+    "/jmatv/fun-facts and /jmatv/puns-finn-danger: no 'channel' word in visible copy.",
+    "Back button: hidden on /, visible on /play with text 'Back'.",
+    "No pageerror events during any navigation."
+  ],
+  "not_tested": [
+    "Programmatic verification of the 5 achievement earn-paths (ach_beat_cadet / ach_ear_cadet / ach_keyboard_cadet+pro / ach_rhythm_cadet / ach_song_cadet). Would require driving each mini-game to its earn condition; skipped in favour of visible UI verification per agent-to-agent note. The dead earnSticker removals were verified by reading the source diff (no earnSticker call remains in LoopStudioPage/EarTrainerPage/SimonSaysPage/RhythmGamePage/SongStudioPage for the flagged IDs).",
+    "iOS silent-switch bypass audio behaviour (cannot verify on headless Chromium)."
+  ],
+  "test_report_links": [],
+  "action_items": [
+    "In /app/frontend/src/pages/BoomGardenPage.js line ~47, change `label: 'Echo Stew'` to `label: 'Parrot Percussion'` (and, if the design calls for it, add a `tagline: 'Stew plays. You play it back.'` field the ModeTile can render). This will also fix the in-game GameHeader which composes 'Who's Got the Rhythm · {mode.label}'.",
+    "In /app/frontend/src/pages/JMAtvChannelPage.js line ~167, remove the word 'channels' from the empty-state copy (e.g. change 'Check the other channels in the meantime.' → 'Check the other shows in the meantime.') so that /jmatv/variety-show honours the no-'channel' rule."
+  ],
+  "critical_code_review_comments": [
+    "BoomGardenPage.js is ~1100 lines — should be split (mode config, useDrumAudio hook, three mode-runtime functions, GameHeader wrapper).",
+    "JMAtvChannelPage empty-state copy is hard-coded; consider sourcing 'coming soon' body text from data/jmatv.js so future channel-name/word-scrub rules can be enforced in one place."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (frontend-only)", "frontend": "~92% (13 of 14 visible checks pass; 2 real bugs found)"},
+  "seed_data_creation": "None. Set localStorage.jma_player_name_prompted_v1='1' and sessionStorage.jma_audio_unlocked_v1='1' to bypass first-run modals, plus clicked the audio-unlock overlay when it still appeared.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Two known bugs to re-verify after fix: (1) /boom-garden should show 'PARROT PERCUSSION' (not 'ECHO STEW') on the third mode card, and entering that mode should render header 'Who's Got the Rhythm · Parrot Percussion'; (2) /jmatv/variety-show empty state must not contain the word 'channel' (currently reads '…Check the other channels in the meantime.'). Everything else in the batch verified clean. Testids present: home-card-{play|learn|create}, home-retro-tv, play/learn/create-menu-page, submenu-tile-{jelly-jukebox|boom-garden}, rhythm-game-menu, boom-garden-page, boom-mode-{copy|match|trail}, lesson-1..7, jmatv-channel-empty, back-button."
+}

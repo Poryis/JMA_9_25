@@ -1,0 +1,69 @@
+{
+  "summary": "Comprehensive frontend QA of JMA (Jelly of the Month Club Music Academy). 4-phase changes verified: global renames (Stew Kazoo / Beat Lab / Jam Hall / Rhythm Arcade / Ear Quest / Fun Facts Clubhouse), Academy Campus home with 6 destination rooms, RoomCharacters with outfit cycling + speech bubbles on every game page, Academy Rank badge + RankBadge on Home & Sticker Book, harp Home button across all pages, and HTML title. 22/24 acceptance criteria pass. Two real bugs found: (1) Fun Facts modal does NOT open when tapping the new Stew character because musicFacts.js has no 'Stew' key (only 'Lou & Stew'); (2) The Fun Facts mobile horizontal scroller is effectively NOT wider than viewport at 390px because minWidth: 'min(720px, 95vw)' resolves to the smaller value (~370px) — the design intent of a panable scene is broken.",
+  "backend_issues": {},
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "FunFactsPage.js",
+        "issue": "Tapping the NEW 'Stew' character (data-testid='funfacts-character-stew') does nothing - the fact modal never opens. Root cause: musicFacts.js has only 'Lou & Stew' key, no 'Stew' key. getRandomFact('Stew') returns null, so setActiveFact() is never called. Verified: tapping 'Chunk' opens modal correctly; tapping 'Stew' does not.",
+        "selector": "[data-testid='funfacts-character-stew']",
+        "priority": "HIGH"
+      },
+      {
+        "component": "FunFactsPage.js mobile scene container",
+        "issue": "Mobile horizontal-scroll design is broken. The scene wrapper uses minWidth: 'min(720px, 95vw)'. At 390px viewport this evaluates to ~370px which is smaller than the viewport, so the scene is NOT wider than the viewport (measured scrollWidth=371 vs clientWidth=366, diff only 5px). Kids cannot meaningfully pan/explore to discover characters as described in the requirements. Likely fix: use max(720px, 95vw) or a fixed mobile width like 720px so the scene is genuinely wider than mobile viewport.",
+        "selector": "[data-testid='funfacts-scene-scroller']",
+        "priority": "MEDIUM"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "passed_tests": [
+    "HTML <title> = 'Jelly of the Month Club Music Academy (JMA)'",
+    "Home page renders all 6 destination room-cards (room-jam-hall, room-rhythm-arcade, room-kazoo-room, room-ear-quest, room-beat-lab, room-fun-facts-clubhouse)",
+    "Tapping each room navigates to correct hash route (/#/free-play, /#/rhythm-game, /#/simon-says, /#/ear-trainer, /#/loop-studio, /#/fun-facts)",
+    "Home banner 'Jelly of the Month Club · Music Academy' visible",
+    "data-testid='game-title' shows 'JMA'",
+    "data-testid='rank-badge' visible with data-testid='rank-title'='Polliwog' on fresh localStorage",
+    "Sticker Book page shows RankBadge at top (data-testid='rank-badge')",
+    "GameHeader Home button uses harp SVG + 'Home' label (data-testid='home-button') on all game pages and navigates back to '/'",
+    "Stew Kazoo Says page title reads 'Stew Kazoo Says' (no 'Stu Kazoo' anywhere in DOM)",
+    "Stew Kazoo Says renders kazoo-room RoomCharacters (room-char-doctor, room-char-finn, room-char-loustew)",
+    "Stew Kazoo Says menu (data-testid='simon-says-menu') and Start button (data-testid='start-simon-button') present; tapping Start launches the game with no errors",
+    "Beat Lab page header reads 'Beat Lab' (no 'Loop Studio' in DOM); RoomCharacters present (room-char-chunk, room-char-jazzy, room-char-charlie); loop play button (data-testid='loop-play-button') clickable",
+    "Jam Hall page renders title 'Jam Hall' and 4 RoomCharacters (finn, jazzy, chunk, charlie); bells (10 found) clickable, no console errors on tap",
+    "Rhythm Arcade page menu title 'Rhythm Arcade'; RoomCharacters present",
+    "Ear Quest page menu title 'Ear Quest'; RoomCharacters present (doctor, jazzy, charlie)",
+    "Fun Facts page header 'Fun Facts Clubhouse'; scene contains all 7 expected characters (chunk, finn, drjellybone, jazzy, charlie, loustew, stew)",
+    "Tapping a working Fun Facts character (Chunk verified) opens data-testid='funfacts-modal' with 'Tell me another' and 'Cool!' buttons",
+    "Outfit cycling works: tapping Charlie cycled src from charlie-polliwog.png to charlie-zoot.png and triggered transient speech bubble",
+    "Sticker book has no leftover user-facing strings 'Free Play', 'Loop Studio', 'Stu Kazoo' or 'Ear Trainer'",
+    "Sticker data hints reference new names: 'Jam Hall', 'Beat Lab', 'Rhythm Arcade', 'Stew Kazoo Says', 'Ear Quest' (verified in /app/frontend/src/data/stickers.js)",
+    "Mobile 390x844: home page cards stack as a single column (grid-template-columns single 358px track); no horizontal overflow (scrollWidth=clientWidth=390)",
+    "Mobile Fun Facts scroller: overflow-x = 'auto' on data-testid='funfacts-scene-scroller'",
+    "Zero red console errors across all 8 routes tested"
+  ],
+  "test_report_links": [],
+  "action_items": [
+    "FIX (HIGH): Add a 'Stew' entry to /app/frontend/src/data/musicFacts.js with 3-6 facts so the new character's tap opens the fact modal. Or alternatively, change SCENE_CHARS in FunFactsPage so the Stew button calls showFact('Lou & Stew') / shares the Lou & Stew facts (but then stickerId/character-attribution should be reviewed).",
+    "FIX (MEDIUM): Update Fun Facts scene minWidth in /app/frontend/src/pages/FunFactsPage.js. Replace 'min(720px, 95vw)' with something that is GENUINELY wider than a 390px mobile viewport, e.g. minWidth: '720px' (or 'max(720px, 100%)'), so kids can horizontally pan to discover characters as designed."
+  ],
+  "critical_code_review_comments": [
+    "FunFactsPage SCENE_CHARS has two characters mapped to the same stickerId 'char_loustew' (Lou & Stew + the new Stew). Tapping Stew calls earnSticker('char_loustew') but getRandomFact('Stew') is null — inconsistent. Either give Stew its own data + sticker or alias Stew to 'Lou & Stew' facts.",
+    "HomePage.js destination 'fun-facts-clubhouse' sign label says 'CLUBHOUSE' while every other sign matches the room title — minor inconsistency.",
+    "RoomCharacters: 'transition' uses Math.random() in animation duration which produces a different value on every render; consider freezing per-character or via useMemo to avoid re-render-induced animation flicker.",
+    "One React warning is emitted: 'An empty string (\"\") was passed to the src attribute' - benign but worth tracking down (likely a character image with missing src in a fallback path)."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend only)",
+    "frontend": "92% (22/24 acceptance criteria - 2 Fun Facts issues)"
+  },
+  "test_credentials": "N/A - no auth required",
+  "seed_data_creation": "N/A",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "All Phase 1-4 changes confirmed except 2 Fun Facts issues. The Stew character tap-to-fact bug is the only HIGH priority item: musicFacts.js needs a 'Stew' key. The mobile horizontal-scroll for funfacts-scene-scroller needs minWidth change so scrollWidth > clientWidth meaningfully. All other rooms, navigation, RoomCharacters (outfit cycling + bubbles), RankBadge, harp Home button, renames and HTML title are verified working. 0 red console errors observed across all routes.",
+  "rca of the issue": "FunFacts Stew modal bug: SCENE_CHARS in FunFactsPage.js includes a 'Stew' entry (line 28-29) but data/musicFacts.js (line 90 grep showed only 'Lou & Stew' key, no 'Stew' key). FunFactsPage.showFact() calls getRandomFact(characterName) — when name='Stew' the lookup misses and returns falsy, so setActiveFact() is never invoked and the modal stays closed. Fix is to add a 'Stew' entry in musicFacts.js (e.g. duplicate of 'Lou & Stew' or new facts). Mobile scroller bug: 'min(720px, 95vw)' returns the smaller operand. At viewport 390px, 95vw=370.5px < 720px so minWidth becomes 370.5px, defeating horizontal pan. Replace with max(720px, 95vw) or fixed 720px."
+}
