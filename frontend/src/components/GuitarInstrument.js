@@ -121,6 +121,13 @@ const BRIDGE_X = 163;
 const STRIP_Y1 = 392;
 const STRIP_Y2 = 522;
 
+const SKULL_KNOBS = [{ x: 164, y: 571 }, { x: 105, y: 585 }];
+
+function zoneRect(zone, count) {
+  const w = (NUT_X - BRIDGE_X) / count;
+  return { x: NUT_X - (zone + 1) * w, width: w };
+}
+
 function zoneAt(x, y, count) {
   if (y < STRIP_Y1 || y > STRIP_Y2) return null;
   const t = Math.max(0, Math.min(0.999, (NUT_X - x) / (NUT_X - BRIDGE_X)));
@@ -159,7 +166,33 @@ function Pick({ x, y, label }) {
   );
 }
 
-function GuitarArt({ frame, pick, sweepId, svgRef, onPointerDown, onPointerMove, onPointerUp }) {
+function SkullKnob({ x, y, twistId, onTap }) {
+  return (
+    <g>
+      {twistId > 0 && (
+        <motion.circle
+          key={twistId}
+          cx={x} cy={y} r="24"
+          fill="none" stroke="var(--jma-yellow)" strokeWidth="5" strokeDasharray="14 10" strokeLinecap="round"
+          initial={{ rotate: 0, opacity: 1, scale: 0.8 }}
+          animate={{ rotate: [0, -40, 30, 0], opacity: [1, 1, 1, 0], scale: [0.8, 1.1, 1, 1.05] }}
+          transition={{ duration: 0.55, ease: 'easeOut' }}
+          style={{ originX: `${x}px`, originY: `${y}px`, transformBox: 'view-box' }}
+          pointerEvents="none"
+        />
+      )}
+      <circle
+        cx={x} cy={y} r="26" fill="transparent"
+        style={{ cursor: 'pointer' }}
+        data-testid={`guitar-skull-knob-${x}`}
+        onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); onTap(); }}
+      />
+    </g>
+  );
+}
+
+function GuitarArt({ frame, pick, glow, sweepId, twist, onKnobTap, svgRef, onPointerDown, onPointerMove, onPointerUp }) {
+  const glowRect = glow ? zoneRect(glow.zone, glow.count) : null;
   return (
     <svg
       ref={svgRef}
@@ -180,6 +213,16 @@ function GuitarArt({ frame, pick, sweepId, svgRef, onPointerDown, onPointerMove,
         <StrapPin x={427} y={392} angle={-42} />
         <StrapPin x={157} y={814} angle={150} />
       </g>
+      {glowRect && (
+        <rect
+          data-testid="guitar-fret-glow"
+          x={glowRect.x + 2} y={STRIP_Y1 + 18} width={glowRect.width - 4} height={STRIP_Y2 - STRIP_Y1 - 36}
+          rx="10" fill="var(--jma-yellow)" opacity="0.45" stroke="#000" strokeWidth="2.5" pointerEvents="none"
+        />
+      )}
+      {SKULL_KNOBS.map((k, i) => (
+        <SkullKnob key={i} x={k.x} y={k.y} twistId={twist.knob === i ? twist.id : 0} onTap={() => onKnobTap(i)} />
+      ))}
       {sweepId > 0 && (
         <motion.g
           key={sweepId}
@@ -207,6 +250,8 @@ export default function GuitarInstrument({ getAudioGraph, initAudioContext, onPl
   const [frame, setFrame] = useState(0);
   const [pick, setPick] = useState(null);
   const [sweepId, setSweepId] = useState(0);
+  const [glow, setGlow] = useState(null);
+  const [twist, setTwist] = useState({ knob: -1, id: 0 });
 
   const toneRef = useRef(tone); toneRef.current = tone;
   const modeRef = useRef(mode); modeRef.current = mode;
@@ -316,7 +361,7 @@ export default function GuitarInstrument({ getAudioGraph, initAudioContext, onPl
       const chord = CHORDS[zone];
       const freqs = toneRef.current === 'crunch' ? chord.powerFreqs : chord.fullFreqs;
       guitarVoicesRef.current = freqs.map((freq, i) =>
-        makeVoice({ ...common, freq, startAt: i * 0.02, level: 0.55 - i * 0.02, ring: 1.8 })
+        makeVoice({ ...common, freq, startAt: i * 0.022, level: 0.60 - i * 0.02 })
       ).filter(Boolean);
       label = chord.label + (toneRef.current === 'crunch' ? '5' : '');
       heldId = chord.id;
@@ -356,6 +401,7 @@ export default function GuitarInstrument({ getAudioGraph, initAudioContext, onPl
     dragRef.current = { active: true, last: zone };
     const label = zone === null ? null : playZone(zone);
     setPick({ ...p, label });
+    setGlow(zone === null ? null : { zone, count: zoneCount() });
   }, [svgPoint, playZone]);
 
   const onArtMove = useCallback((e) => {
@@ -366,16 +412,25 @@ export default function GuitarInstrument({ getAudioGraph, initAudioContext, onPl
     if (zone !== null && zone !== dragRef.current.last) {
       dragRef.current.last = zone;
       setPick({ ...p, label: playZone(zone) });
+      setGlow({ zone, count: zoneCount() });
     } else {
       setPick(prev => ({ ...p, label: zone === null ? null : (prev && prev.label) }));
     }
   }, [svgPoint, playZone]);
 
   const onArtUp = useCallback(() => {
+    if (!dragRef.current.active) return;
     dragRef.current = { active: false, last: null };
     setPick(null);
+    setGlow(null);
     setGuitarHeld(null);
-  }, [setGuitarHeld]);
+    if (modeRef.current === 'chords') releaseGuitarVoices();
+  }, [setGuitarHeld, releaseGuitarVoices]);
+
+  const onKnobTap = useCallback((knob) => {
+    setTone(t => (t === 'crunch' ? 'clean' : 'crunch'));
+    setTwist(prev => ({ knob, id: prev.id + 1 }));
+  }, []);
 
   useEffect(() => () => {
     activeVoicesRef.current.forEach(voices => voices.forEach(v => v.release()));
@@ -441,7 +496,10 @@ export default function GuitarInstrument({ getAudioGraph, initAudioContext, onPl
         <GuitarArt
           frame={frame}
           pick={pick}
+          glow={glow}
           sweepId={sweepId}
+          twist={twist}
+          onKnobTap={onKnobTap}
           svgRef={svgRef}
           onPointerDown={onArtDown}
           onPointerMove={onArtMove}
