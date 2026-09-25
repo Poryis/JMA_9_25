@@ -125,14 +125,38 @@ Driven by total stickers earned. Warm, non-competitive.
 - `App.js` — RankUpCelebration overlay mounted globally.
 
 ## Backlog
+- **P0 (new, user-flagged as important)**: **Robot Boogie waiting area (bottom lineup) scrolls off-screen on some viewports** — the compact character lineup + Time Machine can be pushed below the fold on shorter phones / landscape / tablet-portrait. Fix so the waiting area is always visible without vertical scroll.
+- **P1 (new)**: **GarageBand-style electric guitar** — add a strummable electric guitar instrument (à la GarageBand touch instruments). Placement TBD (Jam Session tab? new Beat Lab melody instrument? standalone?).
+- **P0 (deferred, needs go)**: Beat Lab rework — swap instruments to Kick/Snare/Hat/Crash + Stand-up bass + Sax (A minor) + Piano; ditch bells; use `[Rhythm | Melody]` tabs.
+- **P1**: Note Names label toggle audit — verify Solfège / Letters / Both across every mini-game.
+- **P1**: JMAtv inline-modal player on iOS Safari (kill the per-episode "TAP FOR SOUND" tap).
+- **P1**: Rename "Detective Dr. Jellybone" → "Dr. Jellybone" app-wide.
 - **P1**: Replace `HarpIcon.js` SVG with user's custom harp artwork once uploaded → `assets/ui/harp.png`.
+- **P1**: Beat Lab grid-cell memoization — split 96-cell sequencer into memoized rows.
+- **P2**: Beat Lab timer consolidation (merge 7 setTimeout/setInterval calls).
+- **P2**: Robot Boogie "boop" SFX on pinch-scale complete.
+- **P2**: Parent Page CREATE spotlight (DAW / Song Studio) on `ForParentsPage`.
+- **P2**: Dynamic scale numbers on parent page (read from data files).
+- **P2**: Mechanic tags on game cards ("Tap the notes" / "Match by ear").
+- **P2**: Sticker Book preview strip on Home.
+- **P2**: JMAtv "Puns and Funs" episode rename list (waiting on user's titles).
+- **P2**: Note Match logo swap (waiting on white PNG upload).
 - **P2**: Score multiplier (×2) for streaks of 5+ in Rhythm Arcade.
 - **P2**: 0.5x / 1x tempo dial on Boom Garden mode-pick screen for struggling students.
 - **P2**: Split `FreePlayPage.js` (>900 lines) and `BoomGardenPage.js` (>800 lines) into sub-components.
 - **P2**: README.md with GitHub Pages deploy instructions.
 - **P2**: Verify MP3 recording on real mobile devices.
+- **P3**: Hide "For Grown-ups" home-page link after subscribe (waits on Path C).
+- **P3**: 24/7 streaming channel (research phase, on hold).
+- **P3**: Color-randomness audit (case-by-case, on hold).
 - **P3**: Confetti celebration on Who's Got Rhythm / Ear Quest milestones.
 - **P3**: "Maestro's Map" board-game journey using existing minigames as tiles (idea stage).
+
+## Path C — Backend (PAUSED, do NOT start until user says so)
+- **Stage 1**: FastAPI + MongoDB + Auth backbone (JWT email/password + Emergent Google Auth for teachers + Class Code + First Name for kids). Zero visible UI change.
+- **Stage 2**: Optional login syncs stickers/ranks to DB. Guest play still frictionless.
+- **Stage 3**: `/teacher-portal` (rosters, class codes, report cards).
+- **Stage 4**: Stripe test-mode checkout + free-tier paywall (chill Jukebox, Note Match easy, Lesson 1, Cadet Rhythm, Jam Session, Beat Lab are free; rest locked with silhouette stickers as teasers).
 
 ## Implemented (Feb 20, 2026 — later) — Boom Garden round-cycle + Stew Kazoo animations
 - **Tap Trail no longer breaks after one round** — added `roundKey` on `RhythmStrip` / `ScrollingRhythmStrip` so the framer-motion node fully remounts between rounds and re-applies `initial={{ x: startX }}`. Verified via DOM probe across 3 consecutive Tap Trail rounds.
